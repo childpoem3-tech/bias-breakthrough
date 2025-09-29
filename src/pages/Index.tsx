@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { DecisionLabLogo } from '@/components/DecisionLabLogo';
 import { ProgressIndicator } from '@/components/ProgressIndicator';
 import { GameCard } from '@/components/GameCard';
+import { GameSession } from '@/components/GameSession';
 import { ConsentModal } from '@/components/ConsentModal';
 import { GAMES_DATA, getTierGames } from '@/data/games';
 import { GameTier, GameLevel, UserProgress } from '@/types/game';
@@ -14,6 +15,7 @@ import { Trophy, Users, BarChart3, FileText, Play, Sparkles, Target } from 'luci
 const Index = () => {
   const [showConsent, setShowConsent] = useState(true);
   const [hasConsented, setHasConsented] = useState(false);
+  const [activeGame, setActiveGame] = useState<{ gameId: string; level: GameLevel } | null>(null);
   const [userProgress, setUserProgress] = useState<UserProgress>({
     currentTier: 'beginner',
     completedGames: [],
@@ -45,8 +47,17 @@ const Index = () => {
   };
 
   const handleStartGame = (gameId: string, level: GameLevel) => {
-    console.log(`Starting game ${gameId} at level ${level}`);
-    // TODO: Navigate to game component
+    setActiveGame({ gameId, level });
+  };
+
+  const handleGameComplete = (result: any) => {
+    console.log('Game completed:', result);
+    // TODO: Save to Supabase and update user progress
+    setActiveGame(null);
+  };
+
+  const handleBackToGames = () => {
+    setActiveGame(null);
   };
 
   const calculateTierProgress = () => {
@@ -83,6 +94,17 @@ const Index = () => {
           </div>
         </div>
       </>
+    );
+  }
+
+  if (activeGame) {
+    return (
+      <GameSession
+        gameId={activeGame.gameId}
+        level={activeGame.level}
+        onComplete={handleGameComplete}
+        onBack={handleBackToGames}
+      />
     );
   }
 
