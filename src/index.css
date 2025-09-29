@@ -2,41 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Decision Lab Design System - Scientific Research Lab meets Modern Gaming UI */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core Lab Theme */
+    --background: 220 27% 98%;
+    --foreground: 220 13% 18%;
 
+    /* Cards & Surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 13% 18%;
+    --card-highlight: 220 60% 97%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /* Scientific Blue Primary */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-muted: 217 91% 95%;
+    --primary-dark: 217 91% 45%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Lab Secondary (Deep Research Blue) */
+    --secondary: 220 25% 25%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-light: 220 25% 95%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Accent (Electric Lab Blue) */
+    --accent: 195 100% 50%;
+    --accent-foreground: 0 0% 100%;
+    --accent-muted: 195 100% 95%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Success (Progress Green) */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --success-muted: 142 76% 95%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Warning (Attention Amber) */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-muted: 38 92% 95%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Muted Lab Grays */
+    --muted: 220 13% 95%;
+    --muted-foreground: 220 13% 45%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Borders & Inputs */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%;
 
-    --radius: 0.5rem;
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Gradients for depth */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-dark)));
+    --gradient-lab: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(var(--card-highlight)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(142 76% 28%));
+
+    /* Shadows */
+    --shadow-lab: 0 4px 6px -1px hsl(var(--primary) / 0.1);
+    --shadow-card: 0 2px 8px -2px hsl(220 13% 18% / 0.1);
+    --shadow-elevated: 0 8px 25px -5px hsl(var(--primary) / 0.15);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -56,41 +89,64 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark Lab Theme */
+    --background: 220 27% 8%;
+    --foreground: 220 13% 92%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    /* Dark Cards */
+    --card: 220 27% 12%;
+    --card-foreground: 220 13% 92%;
+    --card-highlight: 220 27% 15%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    /* Dark Primary */
+    --primary: 217 91% 65%;
+    --primary-foreground: 220 27% 8%;
+    --primary-muted: 217 91% 15%;
+    --primary-dark: 217 91% 50%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Dark Secondary */
+    --secondary: 220 13% 92%;
+    --secondary-foreground: 220 27% 8%;
+    --secondary-light: 220 27% 15%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Dark Accent */
+    --accent: 195 100% 55%;
+    --accent-foreground: 220 27% 8%;
+    --accent-muted: 195 100% 15%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Dark Success */
+    --success: 142 76% 45%;
+    --success-foreground: 220 27% 8%;
+    --success-muted: 142 76% 15%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Dark Warning */
+    --warning: 38 92% 55%;
+    --warning-foreground: 220 27% 8%;
+    --warning-muted: 38 92% 15%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /* Dark Muted */
+    --muted: 220 27% 15%;
+    --muted-foreground: 220 13% 65%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Dark Borders */
+    --border: 220 27% 18%;
+    --input: 220 27% 18%;
+    --ring: 217 91% 65%;
+
+    /* Dark Destructive */
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 220 27% 8%;
+
+    /* Dark Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-dark)));
+    --gradient-lab: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(var(--card-highlight)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(142 76% 35%));
+
+    /* Dark Shadows */
+    --shadow-lab: 0 4px 6px -1px hsl(0 0% 0% / 0.3);
+    --shadow-card: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
+    --shadow-elevated: 0 8px 25px -5px hsl(0 0% 0% / 0.4);
   }
 }
 
