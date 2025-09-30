@@ -14,13 +14,204 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          event_type: string
+          id: string
+          payload: Json | null
+          session_id: string | null
+          timestamp: string
+        }
+        Insert: {
+          event_type: string
+          id?: string
+          payload?: Json | null
+          session_id?: string | null
+          timestamp?: string
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          session_id?: string | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          level_group: string
+          metadata: Json | null
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          level_group: string
+          metadata?: Json | null
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          level_group?: string
+          metadata?: Json | null
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      results: {
+        Row: {
+          created_at: string
+          game_id: string
+          id: string
+          inputs: Json
+          level: string
+          outcome: Json
+          score: number | null
+          session_id: string
+          time_taken_sec: number | null
+        }
+        Insert: {
+          created_at?: string
+          game_id: string
+          id?: string
+          inputs: Json
+          level: string
+          outcome: Json
+          score?: number | null
+          session_id: string
+          time_taken_sec?: number | null
+        }
+        Update: {
+          created_at?: string
+          game_id?: string
+          id?: string
+          inputs?: Json
+          level?: string
+          outcome?: Json
+          score?: number | null
+          session_id?: string
+          time_taken_sec?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "results_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "results_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          completed: boolean | null
+          device_info: Json | null
+          ended_at: string | null
+          id: string
+          last_active_at: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          device_info?: Json | null
+          ended_at?: string | null
+          id?: string
+          last_active_at?: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          device_info?: Json | null
+          ended_at?: string | null
+          id?: string
+          last_active_at?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          anon_id: string | null
+          consent_given: boolean | null
+          consent_timestamp: string | null
+          created_at: string
+          email: string | null
+          id: string
+          supabase_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          anon_id?: string | null
+          consent_given?: boolean | null
+          consent_timestamp?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          supabase_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anon_id?: string | null
+          consent_given?: boolean | null
+          consent_timestamp?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          supabase_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_active_players_by_game: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          active_count: number
+          game_name: string
+          game_slug: string
+          total_plays: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
