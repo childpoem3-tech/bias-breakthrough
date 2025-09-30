@@ -1,8 +1,11 @@
-import { useState } from 'react';
 import { GameLevel } from '@/types/game';
 import { DictatorGame } from './games/DictatorGame';
 import { UltimatumGame } from './games/UltimatumGame';
 import { DelayDiscountingGame } from './games/DelayDiscountingGame';
+import { PrisonersDilemmaGame } from './games/PrisonersDilemmaGame';
+import { TrustGame } from './games/TrustGame';
+import { LotteryGame } from './games/LotteryGame';
+import { RaceToZeroGame } from './games/RaceToZeroGame';
 
 interface GameSessionProps {
   gameId: string;
@@ -20,6 +23,14 @@ export const GameSession = ({ gameId, level, onComplete, onBack }: GameSessionPr
         return <UltimatumGame level={level} onComplete={onComplete} onBack={onBack} />;
       case 'delay_discounting_v1':
         return <DelayDiscountingGame level={level} onComplete={onComplete} onBack={onBack} />;
+      case 'prisoners_dilemma_v1':
+        return <PrisonersDilemmaGame level={level} onComplete={onComplete} onBack={onBack} />;
+      case 'trust_game_v1':
+        return <TrustGame level={level} onComplete={onComplete} onBack={onBack} />;
+      case 'lottery_v1':
+        return <LotteryGame level={level} onComplete={onComplete} onBack={onBack} />;
+      case 'race_to_zero_v1':
+        return <RaceToZeroGame level={level} onComplete={onComplete} onBack={onBack} />;
       default:
         return (
           <div className="text-center p-8">
