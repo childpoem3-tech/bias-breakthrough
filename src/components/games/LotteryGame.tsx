@@ -20,11 +20,11 @@ export const LotteryGame = ({ level, onComplete, onBack }: LotteryGameProps) => 
 
   const getOptions = () => {
     switch (level) {
-      case 'beginner':
+      case 1:
         return { safe: 50, risky: { win: 100, lose: 0, probability: 0.5 } };
-      case 'intermediate':
+      case 2:
         return { safe: 40, risky: { win: 120, lose: 0, probability: 0.4 } };
-      case 'advanced':
+      case 3:
         return { safe: 30, risky: { win: 150, lose: -20, probability: 0.3 } };
       default:
         return { safe: 50, risky: { win: 100, lose: 0, probability: 0.5 } };
@@ -35,11 +35,11 @@ export const LotteryGame = ({ level, onComplete, onBack }: LotteryGameProps) => 
 
   const getDescription = () => {
     switch (level) {
-      case 'beginner':
+      case 1:
         return '50/50 odds - Balanced risk';
-      case 'intermediate':
+      case 2:
         return '40% win chance - Higher reward';
-      case 'advanced':
+      case 3:
         return '30% win chance - Can lose points!';
       default:
         return '';

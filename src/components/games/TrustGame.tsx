@@ -20,11 +20,11 @@ export const TrustGame = ({ level, onComplete, onBack }: TrustGameProps) => {
 
   const getDescription = () => {
     switch (level) {
-      case 'beginner':
+      case 1:
         return '50% return rate - Low risk';
-      case 'intermediate':
+      case 2:
         return 'Variable return - Medium risk';
-      case 'advanced':
+      case 3:
         return 'Unpredictable partner - High risk';
       default:
         return '';
@@ -37,9 +37,9 @@ export const TrustGame = ({ level, onComplete, onBack }: TrustGameProps) => {
     setTimeout(() => {
       // Calculate return based on level
       let actualReturn: number;
-      if (level === 'beginner') {
+      if (level === 1) {
         actualReturn = invested * multiplier * 0.5;
-      } else if (level === 'intermediate') {
+      } else if (level === 2) {
         actualReturn = invested * multiplier * (Math.random() * 0.6 + 0.2); // 20-80%
       } else {
         // Advanced: partner may betray

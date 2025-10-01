@@ -18,7 +18,7 @@ export const PrisonersDilemmaGame = ({ level, onComplete, onBack }: PrisonersDil
   const [round, setRound] = useState(1);
   const [userScore, setUserScore] = useState(0);
   const [aiScore, setAiScore] = useState(0);
-  const totalRounds = level === 'beginner' ? 3 : level === 'intermediate' ? 5 : 7;
+  const totalRounds = level === 1 ? 3 : level === 2 ? 5 : 7;
 
   const payoffMatrix = {
     cooperate: { cooperate: 3, defect: 0 },
@@ -27,11 +27,11 @@ export const PrisonersDilemmaGame = ({ level, onComplete, onBack }: PrisonersDil
 
   const getDescription = () => {
     switch (level) {
-      case 'beginner':
+      case 1:
         return '3 rounds - Simple cooperation test';
-      case 'intermediate':
+      case 2:
         return '5 rounds - Strategic thinking required';
-      case 'advanced':
+      case 3:
         return '7 rounds - Complex game theory';
       default:
         return '';
@@ -43,9 +43,9 @@ export const PrisonersDilemmaGame = ({ level, onComplete, onBack }: PrisonersDil
     
     // AI strategy based on level
     let ai: 'cooperate' | 'defect';
-    if (level === 'beginner') {
+    if (level === 1) {
       ai = Math.random() > 0.5 ? 'cooperate' : 'defect';
-    } else if (level === 'intermediate') {
+    } else if (level === 2) {
       // Tit-for-tat with some cooperation
       ai = round === 1 ? 'cooperate' : (userChoice === 'cooperate' ? 'cooperate' : 'defect');
     } else {

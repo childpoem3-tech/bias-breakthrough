@@ -1,5 +1,5 @@
 export type GameTier = 'beginner' | 'intermediate' | 'advanced';
-export type GameLevel = 'beginner' | 'intermediate' | 'advanced';
+export type GameLevel = 1 | 2 | 3;
 export type GameStatus = 'locked' | 'available' | 'completed';
 
 export interface GameResult {
