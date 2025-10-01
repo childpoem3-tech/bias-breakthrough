@@ -19,11 +19,11 @@ export const DelayDiscountingGame = ({ level, onComplete, onBack }: DelayDiscoun
 
   const getScenario = () => {
     switch (level) {
-      case 1:
+      case 'beginner':
         return { immediate: 50, delayed: 100, waitTime: 10 };
-      case 2:
+      case 'intermediate':
         return { immediate: 30, delayed: 80, waitTime: 15 };
-      case 3:
+      case 'advanced':
         return { immediate: 40, delayed: 120, waitTime: 20 };
       default:
         return { immediate: 50, delayed: 100, waitTime: 10 };
@@ -34,11 +34,11 @@ export const DelayDiscountingGame = ({ level, onComplete, onBack }: DelayDiscoun
 
   const getLevelDescription = () => {
     switch (level) {
-      case 1:
+      case 'beginner':
         return "Simple choice: immediate small reward vs. delayed larger reward";
-      case 2:
+      case 'intermediate':
         return "Harder choice: smaller immediate vs. much longer wait";
-      case 3:
+      case 'advanced':
         return "Complex choice: multiple factors to consider";
       default:
         return "";

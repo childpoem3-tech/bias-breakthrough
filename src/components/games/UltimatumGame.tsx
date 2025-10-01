@@ -24,11 +24,11 @@ export const UltimatumGame = ({ level, onComplete, onBack }: UltimatumGameProps)
 
   const getLevelDescription = () => {
     switch (level) {
-      case 1:
+      case 'beginner':
         return "Basic negotiation: Propose a split, the AI can accept or reject.";
-      case 2:
+      case 'intermediate':
         return "Fairness matters: The AI is more sensitive to unfair offers.";
-      case 3:
+      case 'advanced':
         return "Strategic AI: The AI considers your previous offers and reputation.";
       default:
         return "";
@@ -37,9 +37,9 @@ export const UltimatumGame = ({ level, onComplete, onBack }: UltimatumGameProps)
 
   const getAiAcceptanceThreshold = () => {
     switch (level) {
-      case 1: return 20; // AI accepts if they get 20+ points
-      case 2: return 30; // AI is more demanding
-      case 3: return 25; // AI considers strategy
+      case 'beginner': return 20; // AI accepts if they get 20+ points
+      case 'intermediate': return 30; // AI is more demanding
+      case 'advanced': return 25; // AI considers strategy
       default: return 20;
     }
   };
@@ -57,8 +57,8 @@ export const UltimatumGame = ({ level, onComplete, onBack }: UltimatumGameProps)
       const threshold = getAiAcceptanceThreshold();
       const willAccept = otherShare >= threshold;
       
-      // Add some randomness for level 3
-      const decision = level === 3 && Math.random() < 0.2 
+      // Add some randomness for advanced
+      const decision = level === 'advanced' && Math.random() < 0.2 
         ? (willAccept ? 'reject' : 'accept') // 20% chance of surprise decision
         : (willAccept ? 'accept' : 'reject');
       

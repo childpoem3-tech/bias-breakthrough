@@ -22,11 +22,11 @@ export const DictatorGame = ({ level, onComplete, onBack }: DictatorGameProps) =
 
   const getLevelDescription = () => {
     switch (level) {
-      case 1:
+      case 'beginner':
         return "Simple allocation: Decide how to split 100 points between yourself and another person.";
-      case 2:
+      case 'intermediate':
         return "Timed decision: You have 30 seconds to decide the allocation.";
-      case 3:
+      case 'advanced':
         return "Multiple rounds: Make 3 allocation decisions with different scenarios.";
       default:
         return "";

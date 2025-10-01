@@ -1,5 +1,5 @@
 export type GameTier = 'beginner' | 'intermediate' | 'advanced';
-export type GameLevel = 1 | 2 | 3;
+export type GameLevel = 'beginner' | 'intermediate' | 'advanced';
 export type GameStatus = 'locked' | 'available' | 'completed';
 
 export interface GameResult {
@@ -26,9 +26,9 @@ export interface Game {
   order: number;
   status: GameStatus;
   levelProgress: {
-    1: GameStatus;
-    2: GameStatus;
-    3: GameStatus;
+    beginner: GameStatus;
+    intermediate: GameStatus;
+    advanced: GameStatus;
   };
   inputTypes: string[];
   estimatedDuration: number; // in minutes

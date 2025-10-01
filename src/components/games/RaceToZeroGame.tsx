@@ -20,17 +20,17 @@ export const RaceToZeroGame = ({ level, onComplete, onBack }: RaceToZeroGameProp
   const [userTotal, setUserTotal] = useState(0);
   const [history, setHistory] = useState<number[]>([]);
   
-  const totalRounds = level === 1 ? 5 : level === 2 ? 7 : 10;
-  const numPlayers = level === 1 ? 2 : level === 2 ? 3 : 4;
-  const regenerationRate = level === 1 ? 0.2 : level === 2 ? 0.15 : 0.1;
+  const totalRounds = level === 'beginner' ? 5 : level === 'intermediate' ? 7 : 10;
+  const numPlayers = level === 'beginner' ? 2 : level === 'intermediate' ? 3 : 4;
+  const regenerationRate = level === 'beginner' ? 0.2 : level === 'intermediate' ? 0.15 : 0.1;
 
   const getDescription = () => {
     switch (level) {
-      case 1:
+      case 'beginner':
         return `${totalRounds} rounds, ${numPlayers} players - 20% regeneration`;
-      case 2:
+      case 'intermediate':
         return `${totalRounds} rounds, ${numPlayers} players - 15% regeneration`;
-      case 3:
+      case 'advanced':
         return `${totalRounds} rounds, ${numPlayers} players - 10% regeneration`;
       default:
         return '';
