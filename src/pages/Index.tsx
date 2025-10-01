@@ -10,9 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Users, BarChart3, FileText, Play, Sparkles, Target } from 'lucide-react';
+import { Trophy, Users, BarChart3, FileText, Play, Sparkles, Target, UserCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
+  const navigate = useNavigate();
   const [showConsent, setShowConsent] = useState(true);
   const [hasConsented, setHasConsented] = useState(false);
   const [activeGame, setActiveGame] = useState<{ gameId: string; level: GameLevel } | null>(null);
@@ -117,6 +119,15 @@ const Index = () => {
             <DecisionLabLogo />
             
             <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigate('/profile')}
+                className="gap-2"
+              >
+                <UserCircle className="w-4 h-4" />
+                Profile
+              </Button>
               <div className="text-right">
                 <p className="text-sm font-medium text-foreground">Total Score</p>
                 <p className="text-2xl font-bold text-primary">{userProgress.totalScore}</p>
@@ -175,7 +186,7 @@ const Index = () => {
               {/* Welcome Section */}
               <div className="text-center space-y-4">
                 <h1 className="text-4xl font-bold text-foreground">
-                  Welcome to <span className="text-foreground">Decision Lab</span>
+                  Discover Your <span className="text-foreground">Decision</span> Patterns
                 </h1>
                 <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                   Explore your decision-making patterns through scientifically-designed games. 

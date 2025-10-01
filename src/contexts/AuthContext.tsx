@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/consent`
+        redirectTo: `${window.location.origin}/profile-setup`
       }
     });
     
@@ -121,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (newUser) {
       setUserId(newUser.id);
       localStorage.setItem('guestUserId', newUser.id);
-      window.location.href = '/consent';
+      window.location.href = '/profile-setup';
     }
   };
 

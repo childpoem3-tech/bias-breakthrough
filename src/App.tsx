@@ -8,6 +8,8 @@ import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Consent from "./pages/Consent";
 import Index from "./pages/Index";
+import ProfileSetup from "./pages/ProfileSetup";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +25,8 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/consent" element={<Consent />} />
+            <Route path="/profile-setup" element={<ProfileSetup />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/lobby" element={<Index />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
