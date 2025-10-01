@@ -15,16 +15,16 @@ export const GameCard = ({ game, onStartGame, onContinueGame }: GameCardProps) =
   const isCompleted = game.status === 'completed';
   
   const getCurrentLevel = (): GameLevel => {
-    if (game.levelProgress[3] === 'completed') return 3;
-    if (game.levelProgress[2] === 'completed') return 3;
-    if (game.levelProgress[1] === 'completed') return 2;
-    return 1;
+    if (game.levelProgress['advanced'] === 'completed') return 'advanced';
+    if (game.levelProgress['intermediate'] === 'completed') return 'advanced';
+    if (game.levelProgress['beginner'] === 'completed') return 'intermediate';
+    return 'beginner';
   };
 
   const getNextAvailableLevel = (): GameLevel | null => {
-    if (game.levelProgress[1] === 'available') return 1;
-    if (game.levelProgress[2] === 'available') return 2;
-    if (game.levelProgress[3] === 'available') return 3;
+    if (game.levelProgress['beginner'] === 'available') return 'beginner';
+    if (game.levelProgress['intermediate'] === 'available') return 'intermediate';
+    if (game.levelProgress['advanced'] === 'available') return 'advanced';
     return null;
   };
 
@@ -51,10 +51,11 @@ export const GameCard = ({ game, onStartGame, onContinueGame }: GameCardProps) =
   };
 
   const renderLevelProgress = () => {
+    const levels: GameLevel[] = ['beginner', 'intermediate', 'advanced'];
     return (
       <div className="flex items-center gap-1 mt-2">
-        {[1, 2, 3].map((level) => {
-          const levelStatus = game.levelProgress[level as GameLevel];
+        {levels.map((level, index) => {
+          const levelStatus = game.levelProgress[level];
           return (
             <div
               key={level}
@@ -65,7 +66,7 @@ export const GameCard = ({ game, onStartGame, onContinueGame }: GameCardProps) =
                   ? 'bg-primary'
                   : 'bg-muted border border-border'
               }`}
-              title={`Level ${level}: ${levelStatus}`}
+              title={`Level ${index + 1} (${level}): ${levelStatus}`}
             />
           );
         })}
@@ -99,14 +100,15 @@ export const GameCard = ({ game, onStartGame, onContinueGame }: GameCardProps) =
     }
 
     if (nextLevel) {
-      const isFirstLevel = nextLevel === 1;
+      const isFirstLevel = nextLevel === 'beginner';
+      const levelName = nextLevel.charAt(0).toUpperCase() + nextLevel.slice(1);
       return (
         <Button 
           className="w-full bg-gradient-primary hover:scale-105 transition-all duration-300 shadow-lab"
           onClick={() => onStartGame(game.id, nextLevel)}
         >
           <Play className="w-4 h-4 mr-2" />
-          {isFirstLevel ? 'Start Game' : `Continue Level ${nextLevel}`}
+          {isFirstLevel ? 'Start Game' : `Continue: ${levelName}`}
         </Button>
       );
     }

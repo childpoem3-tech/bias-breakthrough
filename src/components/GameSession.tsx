@@ -6,6 +6,9 @@ import { PrisonersDilemmaGame } from './games/PrisonersDilemmaGame';
 import { TrustGame } from './games/TrustGame';
 import { LotteryGame } from './games/LotteryGame';
 import { RaceToZeroGame } from './games/RaceToZeroGame';
+import { FramingGame } from './games/FramingGame';
+import { SocialComparisonGame } from './games/SocialComparisonGame';
+import { QuantumDilemmaGame } from './games/QuantumDilemmaGame';
 
 interface GameSessionProps {
   gameId: string;
@@ -31,6 +34,16 @@ export const GameSession = ({ gameId, level, onComplete, onBack }: GameSessionPr
         return <LotteryGame level={level} onComplete={onComplete} onBack={onBack} />;
       case 'race_to_zero_v1':
         return <RaceToZeroGame level={level} onComplete={onComplete} onBack={onBack} />;
+      case 'lottery_v1':
+        return <LotteryGame level={level} onComplete={onComplete} onBack={onBack} />;
+      case 'framing_game_v1':
+        return <FramingGame level={level} onComplete={onComplete} onBack={onBack} />;
+      case 'social_comparison_v1':
+        return <SocialComparisonGame level={level} onComplete={onComplete} onBack={onBack} />;
+      case 'quantum_dilemma_v1':
+        return <QuantumDilemmaGame level={level} onComplete={onComplete} onBack={onBack} />;
+      case 'risk_lottery_v1':
+        return <LotteryGame level={level} onComplete={onComplete} onBack={onBack} />;
       default:
         return (
           <div className="text-center p-8">
