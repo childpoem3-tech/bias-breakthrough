@@ -175,7 +175,7 @@ const Index = () => {
               {/* Welcome Section */}
               <div className="text-center space-y-4">
                 <h1 className="text-4xl font-bold text-foreground">
-                  Welcome to <span className="text-primary">Decision Lab</span>
+                  Welcome to <span className="text-foreground">Decision Lab</span>
                 </h1>
                 <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                   Explore your decision-making patterns through scientifically-designed games. 
