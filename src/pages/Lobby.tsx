@@ -31,29 +31,35 @@ export default function Lobby() {
     }
     
     initializeSession();
+  }, [user, userId]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    
     loadUserProgress();
     
-    // Real-time subscription for results
-    const channel = supabase
-      .channel('lobby-updates')
+    // Real-time subscription for results - any changes trigger reload
+    const resultsChannel = supabase
+      .channel('results-changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'results',
-          filter: `session_id=eq.${sessionId}`
+          table: 'results'
         },
-        () => {
+        (payload) => {
+          console.log('Real-time result update:', payload);
+          // Reload progress when any result is added/updated
           loadUserProgress();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(resultsChannel);
     };
-  }, [user, userId, sessionId]);
+  }, [sessionId]);
 
   const initializeSession = async () => {
     if (!userId) {
@@ -103,38 +109,50 @@ export default function Lobby() {
 
   const loadUserProgress = async () => {
     const currentUserId = userId || localStorage.getItem('guestUserId');
-    if (!currentUserId) return;
+    if (!currentUserId) {
+      console.log('No user ID found');
+      return;
+    }
 
-    // Load profile (placeholder for when profiles table is approved)
-    // const { data: profile } = await supabase
-    //   .from('profiles')
-    //   .select('*')
-    //   .eq('user_id', currentUserId)
-    //   .single();
-
-    // if (profile) {
-    //   setUserProfile(profile);
-    // }
+    console.log('Loading progress for user:', currentUserId);
 
     // Load all results for this user
-    const { data: userSessions } = await supabase
+    const { data: userSessions, error: sessionsError } = await supabase
       .from('sessions')
       .select('id')
       .eq('user_id', currentUserId);
 
-    if (!userSessions) return;
+    if (sessionsError) {
+      console.error('Error loading sessions:', sessionsError);
+      return;
+    }
+
+    if (!userSessions || userSessions.length === 0) {
+      console.log('No sessions found for user');
+      return;
+    }
 
     const sessionIds = userSessions.map(s => s.id);
+    console.log('Found sessions:', sessionIds);
 
-    const { data: results } = await supabase
+    const { data: results, error: resultsError } = await supabase
       .from('results')
       .select('*')
       .in('session_id', sessionIds);
 
-    if (results) {
+    if (resultsError) {
+      console.error('Error loading results:', resultsError);
+      return;
+    }
+
+    console.log('Loaded results:', results?.length || 0);
+
+    if (results && results.length > 0) {
       // Calculate stats
-      const totalPoints = results.reduce((sum, r) => sum + (r.score || 0), 0);
+      const totalPoints = results.reduce((sum, r) => sum + (Number(r.score) || 0), 0);
       const uniqueGames = new Set(results.map(r => r.game_id)).size;
+      
+      console.log('Stats:', { totalPoints, uniqueGames });
       
       // Update games with completion status
       const updatedGames = GAMES_DATA.map(game => {
@@ -144,6 +162,8 @@ export default function Lobby() {
         const beginnerComplete = gameResults.some(r => r.level === 'beginner');
         const intermediateComplete = gameResults.some(r => r.level === 'intermediate');
         const advancedComplete = gameResults.some(r => r.level === 'advanced');
+
+        console.log(`Game ${game.name}: B:${beginnerComplete} I:${intermediateComplete} A:${advancedComplete}`);
 
         if (beginnerComplete) {
           levelProgress.beginner = 'completed';
@@ -166,13 +186,16 @@ export default function Lobby() {
         };
       });
 
-      // Unlock next game logic
-      const firstLockedIndex = updatedGames.findIndex(g => g.status === 'locked');
-      if (firstLockedIndex > 0) {
-        const previousGame = updatedGames[firstLockedIndex - 1];
-        if (previousGame.levelProgress.beginner === 'completed') {
-          updatedGames[firstLockedIndex].status = 'available';
-          updatedGames[firstLockedIndex].levelProgress.beginner = 'available';
+      // Unlock next game logic - if you complete beginner level, unlock the next game
+      for (let i = 0; i < updatedGames.length - 1; i++) {
+        const currentGame = updatedGames[i];
+        const nextGame = updatedGames[i + 1];
+        
+        // If current game has at least beginner completed, unlock next game
+        if (currentGame.levelProgress.beginner === 'completed' && nextGame.status === 'locked') {
+          nextGame.status = 'available';
+          nextGame.levelProgress.beginner = 'available';
+          console.log(`Unlocked next game: ${nextGame.name}`);
         }
       }
 
@@ -182,6 +205,10 @@ export default function Lobby() {
         gamesCompleted: uniqueGames,
         currentLevel: Math.floor(uniqueGames / 3) + 1
       });
+
+      console.log('Progress updated successfully');
+    } else {
+      console.log('No results found, keeping default game states');
     }
   };
 
@@ -198,12 +225,33 @@ export default function Lobby() {
   };
 
   const handleGameComplete = async (result: any) => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      toast({
+        title: 'Error',
+        description: 'No active session found',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     const game = games.find(g => g.id === currentGame?.id);
-    if (!game) return;
+    if (!game) {
+      toast({
+        title: 'Error',
+        description: 'Game not found',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-    const { error } = await supabase
+    console.log('Saving game result:', {
+      session_id: sessionId,
+      game_id: game.id,
+      level: currentGame?.level,
+      score: result.score
+    });
+
+    const { data, error } = await supabase
       .from('results')
       .insert({
         session_id: sessionId,
@@ -213,25 +261,34 @@ export default function Lobby() {
         outcome: result.outcome || {},
         score: result.score || 0,
         time_taken_sec: result.timeTaken || 0
-      });
+      })
+      .select();
 
     if (error) {
       console.error('Failed to save result:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save game result',
+        description: `Failed to save game result: ${error.message}`,
         variant: 'destructive'
       });
-    } else {
-      toast({
-        title: 'Game Complete!',
-        description: `You earned ${result.score || 0} points`,
-      });
-      
-      // Reload progress after saving
-      await loadUserProgress();
-      setCurrentGame(null);
+      return;
     }
+
+    console.log('Result saved successfully:', data);
+
+    // Show success message
+    toast({
+      title: '🎉 Game Complete!',
+      description: `You earned ${result.score || 0} points! Level unlocked.`,
+    });
+    
+    // Force immediate reload of progress
+    await loadUserProgress();
+    
+    // Small delay before going back to lobby to show the toast
+    setTimeout(() => {
+      setCurrentGame(null);
+    }, 1500);
   };
 
   const handleBackToLobby = () => {
