@@ -25,11 +25,16 @@ export default function Lobby() {
   const [stats, setStats] = useState({ totalPoints: 0, gamesCompleted: 0, currentLevel: 1 });
 
   useEffect(() => {
-    if (!user && !userId) {
+    // Check for both authenticated users and guest users
+    const guestUserId = localStorage.getItem('guestUserId');
+    
+    if (!user && !userId && !guestUserId) {
+      console.log('No user found, redirecting to auth');
       navigate('/auth');
       return;
     }
     
+    console.log('User authenticated, initializing session');
     initializeSession();
   }, [user, userId]);
 
@@ -62,15 +67,15 @@ export default function Lobby() {
   }, [sessionId]);
 
   const initializeSession = async () => {
-    if (!userId) {
-      const guestId = localStorage.getItem('guestUserId');
-      if (!guestId) {
-        navigate('/auth');
-        return;
-      }
+    const currentUserId = userId || localStorage.getItem('guestUserId');
+    
+    if (!currentUserId) {
+      console.log('No user ID found in initializeSession');
+      navigate('/auth');
+      return;
     }
 
-    const currentUserId = userId || localStorage.getItem('guestUserId');
+    console.log('Initializing session for user:', currentUserId);
     
     const { data: activeSession } = await supabase
       .from('sessions')

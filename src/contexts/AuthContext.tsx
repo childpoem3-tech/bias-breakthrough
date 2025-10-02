@@ -48,6 +48,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         ensureUserRecord(session.user);
       }
+      
+      // Also check for guest user in localStorage
+      const guestId = localStorage.getItem('guestUserId');
+      if (guestId && !session?.user) {
+        console.log('Found guest user in localStorage:', guestId);
+        setUserId(guestId);
+      }
+      
       setIsLoading(false);
     });
 
@@ -100,6 +108,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signInAsGuest = async () => {
     const anonId = `anon-${crypto.randomUUID()}`;
     
+    console.log('Creating guest user with anon_id:', anonId);
+    
     const { data: newUser, error } = await supabase
       .from('users')
       .insert({
@@ -110,6 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .single();
 
     if (error) {
+      console.error('Guest user creation error:', error);
       toast({
         title: 'Error',
         description: 'Failed to create guest account',
@@ -119,9 +130,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (newUser) {
+      console.log('Guest user created:', newUser.id);
       setUserId(newUser.id);
       localStorage.setItem('guestUserId', newUser.id);
-      window.location.href = '/lobby';
+      
+      // Add a small delay to ensure state is updated
+      setTimeout(() => {
+        window.location.href = '/lobby';
+      }, 100);
     }
   };
 
