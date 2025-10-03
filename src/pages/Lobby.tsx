@@ -23,6 +23,7 @@ export default function Lobby() {
   const [games, setGames] = useState<Game[]>(GAMES_DATA);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [stats, setStats] = useState({ totalPoints: 0, gamesCompleted: 0, currentLevel: 1 });
+  const [gameIdMapping, setGameIdMapping] = useState<Record<string, string>>({});
 
   useEffect(() => {
     // Check for both authenticated users and guest users
@@ -35,8 +36,32 @@ export default function Lobby() {
     }
     
     console.log('User authenticated, initializing session');
+    loadGamesFromDatabase();
     initializeSession();
   }, [user, userId]);
+
+  const loadGamesFromDatabase = async () => {
+    console.log('Loading games from database...');
+    const { data: dbGames, error } = await supabase
+      .from('games')
+      .select('id, slug, name');
+
+    if (error) {
+      console.error('Error loading games:', error);
+      return;
+    }
+
+    if (dbGames) {
+      console.log('Loaded games from database:', dbGames);
+      // Create mapping from slug to UUID
+      const mapping: Record<string, string> = {};
+      dbGames.forEach((game) => {
+        mapping[game.slug] = game.id;
+      });
+      setGameIdMapping(mapping);
+      console.log('Game ID mapping:', mapping);
+    }
+  };
 
   useEffect(() => {
     if (!sessionId) return;
@@ -161,7 +186,9 @@ export default function Lobby() {
       
       // Update games with completion status
       const updatedGames = GAMES_DATA.map(game => {
-        const gameResults = results.filter(r => r.game_id === game.id);
+        // Match by slug using the gameIdMapping
+        const gameUuid = gameIdMapping[game.slug];
+        const gameResults = results.filter(r => r.game_id === gameUuid);
         const levelProgress = { ...game.levelProgress };
         
         const beginnerComplete = gameResults.some(r => r.level === 'beginner');
@@ -249,9 +276,22 @@ export default function Lobby() {
       return;
     }
 
+    // Get the actual UUID from the database mapping
+    const gameUuid = gameIdMapping[game.slug];
+    if (!gameUuid) {
+      console.error('Game UUID not found for slug:', game.slug);
+      toast({
+        title: 'Error',
+        description: 'Game not found in database. Please refresh the page.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     console.log('Saving game result:', {
       session_id: sessionId,
-      game_id: game.id,
+      game_slug: game.slug,
+      game_uuid: gameUuid,
       level: currentGame?.level,
       score: result.score
     });
@@ -260,7 +300,7 @@ export default function Lobby() {
       .from('results')
       .insert({
         session_id: sessionId,
-        game_id: game.id,
+        game_id: gameUuid, // Use the UUID from database
         level: currentGame?.level || 'beginner',
         inputs: result.inputs || {},
         outcome: result.outcome || {},
