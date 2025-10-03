@@ -47,19 +47,60 @@ export default function Lobby() {
       .select('id, slug, name');
 
     if (error) {
-      console.error('Error loading games:', error);
+      console.error('Error loading games from database:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load games. Please refresh the page.',
+        variant: 'destructive'
+      });
       return;
     }
 
-    if (dbGames) {
+    if (dbGames && dbGames.length > 0) {
       console.log('Loaded games from database:', dbGames);
-      // Create mapping from slug to UUID
+      
+      // Mapping of database slugs to frontend slugs
+      const slugMapping: Record<string, string> = {
+        'dictator_v1': 'dictator',
+        'ultimatum_v1': 'ultimatum',
+        'delay_discounting_v1': 'delay-discounting',
+        'prisoners_dilemma_v1': 'prisoners-dilemma',
+        'trust_game_v1': 'trust-game',
+        'lottery_v1': 'risk-lottery',
+        'race_to_zero_v1': 'race-to-zero',
+        'framing_v1': 'framing-game',
+        'social_comparison_v1': 'social-comparison',
+        'quantum_v1': 'quantum-dilemma',
+      };
+      
       const mapping: Record<string, string> = {};
       dbGames.forEach((game) => {
-        mapping[game.slug] = game.id;
+        const frontendSlug = slugMapping[game.slug];
+        if (frontendSlug) {
+          mapping[frontendSlug] = game.id;
+          console.log(`✓ Mapped: ${game.slug} → ${frontendSlug} → ${game.id}`);
+        } else {
+          console.warn(`⚠ No mapping found for database slug: ${game.slug}`);
+        }
       });
+      
       setGameIdMapping(mapping);
-      console.log('Game ID mapping:', mapping);
+      console.log('Game ID mapping complete. Total games mapped:', Object.keys(mapping).length);
+      
+      if (Object.keys(mapping).length === 0) {
+        toast({
+          title: 'Warning',
+          description: 'No games could be mapped. Please contact support.',
+          variant: 'destructive'
+        });
+      }
+    } else {
+      console.error('No games found in database!');
+      toast({
+        title: 'Warning',
+        description: 'No games found in database. Please contact support.',
+        variant: 'destructive'
+      });
     }
   };
 
