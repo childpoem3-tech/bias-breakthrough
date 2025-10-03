@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import Consent from "./pages/Consent";
 import ProfileSetup from "./pages/ProfileSetup";
 import Profile from "./pages/Profile";
+import AdminPortal from "./pages/AdminPortal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,8 @@ const App = () => (
             <Route path="/consent" element={<Consent />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/admin" element={<AdminPortal />} />
+            <Route path="/research" element={<AdminPortal />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

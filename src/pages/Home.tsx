@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { DecisionLabLogo } from '@/components/DecisionLabLogo';
-import { ArrowRight, Brain, Users, TrendingUp, Award, Shield, Zap } from 'lucide-react';
+import { ArrowRight, Brain, Users, TrendingUp, Award, Shield, Zap, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 
@@ -82,7 +82,8 @@ export default function Home() {
                 >
                   Play for Free <ArrowRight className="ml-2" />
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate('/research')}>
+                <Button size="lg" variant="outline" onClick={() => navigate('/admin')}>
+                  <Eye className="w-4 h-4 mr-2" />
                   For Researchers
                 </Button>
               </div>
