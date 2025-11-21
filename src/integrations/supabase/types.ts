@@ -76,6 +76,62 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          age_range: string | null
+          avatar_url: string | null
+          bio: string | null
+          country: string | null
+          created_at: string
+          display_name: string | null
+          education_level: string | null
+          gender: string | null
+          id: string
+          interests: string | null
+          occupation: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age_range?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string
+          display_name?: string | null
+          education_level?: string | null
+          gender?: string | null
+          id?: string
+          interests?: string | null
+          occupation?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age_range?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string
+          display_name?: string | null
+          education_level?: string | null
+          gender?: string | null
+          id?: string
+          interests?: string | null
+          occupation?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       results: {
         Row: {
           created_at: string
@@ -165,6 +221,35 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           anon_id: string | null
@@ -204,7 +289,7 @@ export type Database = {
     }
     Functions: {
       get_active_players_by_game: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           active_count: number
           game_name: string
@@ -212,9 +297,28 @@ export type Database = {
           total_plays: number
         }[]
       }
+      get_student_activity: {
+        Args: never
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          last_active: string
+          total_games: number
+          total_sessions: number
+          user_id: string
+        }[]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "student" | "researcher" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -341,6 +445,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["student", "researcher", "admin"],
+    },
   },
 } as const
