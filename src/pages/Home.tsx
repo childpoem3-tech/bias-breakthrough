@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { DecisionLabLogo } from '@/components/DecisionLabLogo';
-import { ArrowRight, Brain, Users, TrendingUp, Award, Shield, Zap, Eye } from 'lucide-react';
+import { ArrowRight, Brain, Users, TrendingUp, Award, Shield, Zap, Eye, Sparkles, Gamepad2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 
@@ -23,7 +23,7 @@ export default function Home() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const games = [
+  const behavioralGames = [
     { name: 'Dictator Game', icon: '💰', desc: 'Test your altruism', level: 'Beginner' },
     { name: 'Ultimatum Game', icon: '🤝', desc: 'Fairness in negotiations', level: 'Beginner' },
     { name: 'Delay Discounting', icon: '⏰', desc: 'Patience vs impulsivity', level: 'Beginner' },
@@ -34,6 +34,58 @@ export default function Home() {
     { name: 'Loss vs Gain Framing', icon: '📊', desc: 'Framing effects', level: 'Advanced' },
     { name: 'Social Comparison', icon: '👥', desc: 'Status and envy', level: 'Advanced' },
     { name: 'Quantum Dilemma', icon: '⚛️', desc: 'Probabilistic choices', level: 'Advanced' }
+  ];
+
+  const threeDGames = [
+    { 
+      name: 'City of Coordinates', 
+      icon: '🏙️', 
+      desc: 'Master 3D coordinate plotting in a futuristic cyber-city with rotating axes',
+      path: '/coordinates',
+      gradient: 'from-blue-500 to-cyan-500'
+    },
+    { 
+      name: 'Kingdom of Factors', 
+      icon: '👑', 
+      desc: 'Explore floating islands in Algebraia with magical factor blocks',
+      path: '/factors',
+      gradient: 'from-green-500 to-blue-500'
+    },
+    { 
+      name: 'Arithmetic Odyssey', 
+      icon: '🌊', 
+      desc: 'Navigate sequence islands on an animated ocean with wave physics',
+      path: '/sequences',
+      gradient: 'from-sky-400 to-blue-600'
+    },
+    { 
+      name: 'Permutation Portal', 
+      icon: '🌀', 
+      desc: 'Unlock cosmic time portals with orbiting keys and swirling energy',
+      path: '/permutations',
+      gradient: 'from-purple-500 to-blue-500'
+    },
+    { 
+      name: 'Combination Quest', 
+      icon: '🏰', 
+      desc: 'Select the perfect team in a mystical guild hall with glowing pedestals',
+      path: '/combinations',
+      gradient: 'from-amber-500 to-purple-500'
+    },
+    { 
+      name: 'Probability Realm', 
+      icon: '🔮', 
+      desc: 'Master chance with animated dice, magical urns, and probability waves',
+      path: '/probability',
+      gradient: 'from-purple-600 to-indigo-600'
+    },
+    { 
+      name: 'Chrono Racers', 
+      icon: '🏎️', 
+      desc: 'Race through time rifts on neon tracks with speed calculations',
+      path: '/racing',
+      gradient: 'from-cyan-500 to-pink-500'
+    }
   ];
 
   return (
@@ -71,7 +123,7 @@ export default function Home() {
               </h1>
               
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Play 10 interactive games based on behavioral economics. Get your personalized bias profile in minutes.
+                Play behavioral games + explore 7 fully interactive 3D worlds. Get your personalized bias profile in minutes.
               </p>
 
               <div className="flex gap-4">
@@ -90,12 +142,12 @@ export default function Home() {
 
               <div className="flex gap-8 pt-4">
                 <div>
-                  <div className="text-3xl font-bold text-primary">10</div>
-                  <div className="text-sm text-muted-foreground">Games</div>
+                  <div className="text-3xl font-bold text-primary">17</div>
+                  <div className="text-sm text-muted-foreground">Total Games</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-primary">5 min</div>
-                  <div className="text-sm text-muted-foreground">Complete Profile</div>
+                  <div className="text-3xl font-bold text-primary">7</div>
+                  <div className="text-sm text-muted-foreground">3D Worlds</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-primary">1000+</div>
@@ -140,26 +192,81 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Games Grid */}
-      <section id="games" className="py-20 px-6 bg-background-secondary/50">
+      {/* 3D Games Showcase */}
+      <section id="games" className="py-20 px-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-blue-500/5 to-cyan-500/5"></div>
+        <div className="container mx-auto relative z-10">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/20 rounded-full border border-primary/30 mb-4">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium">NEW: Fully 3D Interactive</span>
+            </div>
+            <h2 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+              7 World-Class 3D Games
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Experience mathematical concepts in stunning 3D environments with advanced animations and physics
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+            {threeDGames.map((game, i) => (
+              <div 
+                key={i}
+                onClick={() => navigate(game.path)}
+                className="group relative p-6 bg-card/50 backdrop-blur-sm rounded-xl border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-glow hover:-translate-y-2 animate-fade-in cursor-pointer overflow-hidden"
+                style={{ animationDelay: `${i * 0.08}s` }}
+              >
+                {/* Gradient Overlay */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${game.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                
+                <div className="relative z-10">
+                  <div className="text-5xl mb-4 transform group-hover:scale-110 transition-transform duration-300">
+                    {game.icon}
+                  </div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 rounded-full text-xs font-medium text-primary mb-3">
+                    <Gamepad2 className="w-3 h-3" />
+                    3D Interactive
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors">
+                    {game.name}
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                    {game.desc}
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all"
+                  >
+                    Play Now <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Behavioral Games Grid */}
+      <section className="py-20 px-6 bg-background-secondary/50">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">10 Research-Backed Games</h2>
-            <p className="text-muted-foreground text-lg">Each game reveals different aspects of your decision-making</p>
+            <h2 className="text-4xl font-bold mb-4">10 Behavioral Economics Games</h2>
+            <p className="text-muted-foreground text-lg">Research-backed games revealing your decision-making patterns</p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {games.map((game, i) => (
+            {behavioralGames.map((game, i) => (
               <div 
                 key={i}
-                className="group p-6 bg-card rounded-xl border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lab hover:-translate-y-1 animate-fade-in"
+                className="group p-6 bg-card rounded-xl border border-border hover:border-accent/50 transition-all duration-300 hover:shadow-lab hover:-translate-y-1 animate-fade-in"
                 style={{ animationDelay: `${i * 0.05}s` }}
               >
                 <div className="text-4xl mb-4">{game.icon}</div>
                 <div className="inline-block px-3 py-1 bg-accent/20 rounded-full text-xs font-medium text-accent mb-3">
                   {game.level}
                 </div>
-                <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
+                <h3 className="text-xl font-semibold mb-2 group-hover:text-accent transition-colors">
                   {game.name}
                 </h3>
                 <p className="text-muted-foreground text-sm">{game.desc}</p>
