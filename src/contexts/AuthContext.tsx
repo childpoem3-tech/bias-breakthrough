@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/lobby`
+        redirectTo: `${window.location.origin}/dashboard`
       }
     });
     
@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Add a small delay to ensure state is updated
       setTimeout(() => {
-        window.location.href = '/lobby';
+        window.location.href = '/dashboard';
       }, 100);
     }
   };

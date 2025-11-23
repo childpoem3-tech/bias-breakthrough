@@ -24,9 +24,9 @@ export default function Consent() {
       await updateConsent(true);
       toast({
         title: 'Consent Recorded',
-        description: 'Thank you for participating in our research!'
+        description: 'Welcome to DecisionLab!'
       });
-      navigate('/lobby');
+      navigate('/dashboard');
     } catch (error) {
       toast({
         title: 'Error',
@@ -47,63 +47,63 @@ export default function Consent() {
           <div className="inline-block mb-6">
             <DecisionLabLogo size="md" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Research Consent</h1>
+          <h1 className="text-3xl font-bold mb-2">Terms of Use</h1>
           <p className="text-muted-foreground">
             Please review and accept the following to continue
           </p>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-8 shadow-lab animate-scale-in">
-          {/* Study Information */}
+          {/* Platform Information */}
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <FileText className="w-5 h-5 text-primary" />
-              Study Information
+              About DecisionLab
             </h2>
             <div className="space-y-3 text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
               <p>
-                <strong className="text-foreground">Purpose:</strong> This research platform studies human decision-making patterns and cognitive biases through interactive games.
+                <strong className="text-foreground">Purpose:</strong> DecisionLab offers 7 world-class 3D interactive mathematical games for educational purposes.
               </p>
               <p>
-                <strong className="text-foreground">Duration:</strong> Approximately 15-20 minutes to complete all games.
+                <strong className="text-foreground">Content:</strong> Explore immersive 3D worlds teaching coordinates, factors, sequences, permutations, combinations, probability, and racing mechanics.
               </p>
               <p>
-                <strong className="text-foreground">Procedure:</strong> You will play 10 interactive decision-making games across three difficulty levels.
+                <strong className="text-foreground">Experience:</strong> Each game features stunning animations, interactive controls, and progressive learning challenges.
               </p>
             </div>
           </div>
 
-          {/* Data Collection */}
+          {/* Data & Privacy */}
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
-              Data Collection & Privacy
+              Privacy & Data
             </h2>
             <div className="space-y-3 text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
               <p>
-                <strong className="text-foreground">What we collect:</strong> Your game choices, response times, and gameplay patterns. No personally identifiable information is required.
+                <strong className="text-foreground">What we collect:</strong> Optional account information and basic gameplay progress. No personally identifiable information is required to play.
               </p>
               <p>
-                <strong className="text-foreground">How we use it:</strong> Data is analyzed to understand decision-making patterns and cognitive biases. Results are anonymized and aggregated.
+                <strong className="text-foreground">How we use it:</strong> Data helps improve the educational experience and track your personal learning progress.
               </p>
               <p>
-                <strong className="text-foreground">Security:</strong> All data is encrypted and stored securely. You can request data deletion at any time.
+                <strong className="text-foreground">Security:</strong> All data is encrypted and stored securely. You maintain full control over your account.
               </p>
             </div>
           </div>
 
-          {/* Your Rights */}
+          {/* User Rights */}
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
               Your Rights
             </h2>
             <div className="space-y-2 text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
-              <p>✓ Participation is completely voluntary</p>
-              <p>✓ You may withdraw at any time without penalty</p>
-              <p>✓ You can request your data to be deleted</p>
-              <p>✓ You will receive a copy of your results</p>
-              <p>✓ Your identity remains anonymous unless you choose to share it</p>
+              <p>✓ Free access to all 7 3D math games</p>
+              <p>✓ Full control over your account and data</p>
+              <p>✓ Option to play anonymously as a guest</p>
+              <p>✓ Ability to delete your account at any time</p>
+              <p>✓ Educational content with no advertisements</p>
             </div>
           </div>
 
@@ -117,7 +117,7 @@ export default function Consent() {
                 className="mt-1"
               />
               <label htmlFor="terms" className="text-sm leading-relaxed cursor-pointer">
-                I have read and understood the study information and voluntarily agree to participate in this research.
+                I have read and agree to the Terms of Service and understand this is an educational platform.
               </label>
             </div>
 
@@ -129,7 +129,7 @@ export default function Consent() {
                 className="mt-1"
               />
               <label htmlFor="data" className="text-sm leading-relaxed cursor-pointer">
-                I consent to the collection and analysis of my gameplay data for research purposes as described above.
+                I consent to the storage of my gameplay progress for educational tracking purposes.
               </label>
             </div>
 
@@ -141,7 +141,7 @@ export default function Consent() {
                 className="mt-1"
               />
               <label htmlFor="research" className="text-sm leading-relaxed cursor-pointer">
-                I understand that my data may be used in anonymized form for scientific publications and presentations.
+                I am 13 years of age or older and have permission to use this platform.
               </label>
             </div>
           </div>
@@ -169,8 +169,8 @@ export default function Consent() {
           {/* Contact */}
           <p className="mt-6 text-xs text-center text-muted-foreground">
             Questions? Contact us at{' '}
-            <a href="mailto:research@decisionlab.com" className="text-primary hover:underline">
-              research@decisionlab.com
+            <a href="mailto:support@decisionlab.com" className="text-primary hover:underline">
+              support@decisionlab.com
             </a>
           </p>
         </div>
