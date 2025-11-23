@@ -5,6 +5,7 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Redirect to home page - no auto-open of games
     navigate('/home');
   }, [navigate]);
 

@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Home from "./pages/Home";
 import Index from "./pages/Index";
-import Lobby from "./pages/Lobby";
+import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import Consent from "./pages/Consent";
 import ProfileSetup from "./pages/ProfileSetup";
@@ -33,7 +33,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/home" element={<Home />} />
-            <Route path="/lobby" element={<Lobby />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/consent" element={<Consent />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
