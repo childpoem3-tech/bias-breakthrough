@@ -1,6 +1,6 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Html } from '@react-three/drei';
+import { OrbitControls, Html, Trail } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface RacingTrack3DProps {
@@ -10,23 +10,69 @@ interface RacingTrack3DProps {
   targetDistance: number;
 }
 
-function RacingTrack({ speed, distance, targetDistance }: { speed: number; distance: number; targetDistance: number }) {
-  const trackRef = useRef<any>();
-  const gridRef = useRef<any>();
+function SpeedParticles({ speed, isRacing }: { speed: number; isRacing: boolean }) {
+  const particlesRef = useRef<THREE.Points>(null);
   
-  useFrame((state) => {
-    if (trackRef.current && speed > 0) {
-      trackRef.current.position.z += speed * 0.02;
-      if (trackRef.current.position.z > 10) {
-        trackRef.current.position.z = -10;
-      }
+  const particles = useMemo(() => {
+    const positions = new Float32Array(100 * 3);
+    for (let i = 0; i < 100; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 10;
+      positions[i * 3 + 1] = Math.random() * 5;
+      positions[i * 3 + 2] = Math.random() * -30;
     }
-    
-    if (gridRef.current && speed > 0) {
-      gridRef.current.position.z += speed * 0.02;
-      if (gridRef.current.position.z > 2) {
-        gridRef.current.position.z = 0;
+    return positions;
+  }, []);
+
+  useFrame(() => {
+    if (particlesRef.current && isRacing && speed > 0) {
+      const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
+      for (let i = 0; i < 100; i++) {
+        positions[i * 3 + 2] += speed * 0.05;
+        if (positions[i * 3 + 2] > 10) {
+          positions[i * 3 + 2] = -30;
+          positions[i * 3] = (Math.random() - 0.5) * 10;
+        }
       }
+      particlesRef.current.geometry.attributes.position.needsUpdate = true;
+    }
+  });
+
+  if (!isRacing) return null;
+
+  return (
+    <points ref={particlesRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={100}
+          array={particles}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.15}
+        color="#00ffff"
+        transparent
+        opacity={0.8}
+        sizeAttenuation
+      />
+    </points>
+  );
+}
+
+function RacingTrack({ speed, distance, targetDistance }: { speed: number; distance: number; targetDistance: number }) {
+  const trackRef = useRef<THREE.Group>(null);
+  
+  useFrame(() => {
+    if (trackRef.current && speed > 0) {
+      trackRef.current.children.forEach((child, i) => {
+        if (child.type === 'Group') {
+          child.position.z += speed * 0.02;
+          if (child.position.z > 12) {
+            child.position.z = -28;
+          }
+        }
+      });
     }
   });
 
@@ -35,29 +81,50 @@ function RacingTrack({ speed, distance, targetDistance }: { speed: number; dista
   return (
     <group>
       {/* Racing grid ground */}
-      <group ref={gridRef}>
+      <group ref={trackRef}>
         {Array.from({ length: 20 }).map((_, i) => (
-          <mesh key={i} position={[0, -1, -10 + i * 2]} rotation={[-Math.PI / 2, 0, 0]}>
-            <planeGeometry args={[8, 2]} />
-            <meshStandardMaterial
-              color={i % 2 === 0 ? "#1f2937" : "#111827"}
-              emissive="#00ffff"
-              emissiveIntensity={0.1}
-            />
-          </mesh>
+          <group key={i} position={[0, 0, -28 + i * 2]}>
+            <mesh position={[0, -1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[8, 2]} />
+              <meshStandardMaterial
+                color={i % 2 === 0 ? "#1a1a2e" : "#0f0f1a"}
+                emissive="#00ffff"
+                emissiveIntensity={0.05}
+              />
+            </mesh>
+            {/* Center line glow */}
+            <mesh position={[0, -0.99, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[0.1, 2]} />
+              <meshStandardMaterial
+                color="#00ffff"
+                emissive="#00ffff"
+                emissiveIntensity={0.5}
+                transparent
+                opacity={0.5}
+              />
+            </mesh>
+          </group>
         ))}
       </group>
       
-      {/* Neon side barriers */}
+      {/* Neon side barriers with glow */}
       {[-4, 4].map((x, i) => (
-        <mesh key={i} position={[x, 0, 0]}>
-          <boxGeometry args={[0.2, 2, 50]} />
-          <meshStandardMaterial
-            color="#ff00ff"
-            emissive="#ff00ff"
-            emissiveIntensity={0.8}
+        <group key={i}>
+          <mesh position={[x, 0, 0]}>
+            <boxGeometry args={[0.15, 1.5, 50]} />
+            <meshStandardMaterial
+              color={x < 0 ? "#ff00ff" : "#00ffff"}
+              emissive={x < 0 ? "#ff00ff" : "#00ffff"}
+              emissiveIntensity={1}
+            />
+          </mesh>
+          <pointLight
+            position={[x, 0.5, 0]}
+            intensity={2}
+            distance={6}
+            color={x < 0 ? "#ff00ff" : "#00ffff"}
           />
-        </mesh>
+        </group>
       ))}
       
       {/* Checkpoint gates */}
@@ -66,28 +133,32 @@ function RacingTrack({ speed, distance, targetDistance }: { speed: number; dista
         const isPassed = (distance / targetDistance) > (i / 5);
         
         return (
-          <group key={i} position={[0, 2, zPos]}>
-            <mesh position={[-3.5, 0, 0]}>
-              <cylinderGeometry args={[0.1, 0.1, 4, 8]} />
+          <group key={i} position={[0, 0, zPos]}>
+            {/* Gate pillars */}
+            {[-3.5, 3.5].map((x, j) => (
+              <mesh key={j} position={[x, 1, 0]}>
+                <cylinderGeometry args={[0.12, 0.12, 3, 16]} />
+                <meshStandardMaterial
+                  color={isPassed ? "#10b981" : "#ef4444"}
+                  emissive={isPassed ? "#10b981" : "#ef4444"}
+                  emissiveIntensity={isPassed ? 1 : 0.5}
+                />
+              </mesh>
+            ))}
+            {/* Gate top bar */}
+            <mesh position={[0, 2.5, 0]}>
+              <boxGeometry args={[7.2, 0.15, 0.15]} />
               <meshStandardMaterial
                 color={isPassed ? "#10b981" : "#ef4444"}
                 emissive={isPassed ? "#10b981" : "#ef4444"}
-                emissiveIntensity={0.6}
-              />
-            </mesh>
-            <mesh position={[3.5, 0, 0]}>
-              <cylinderGeometry args={[0.1, 0.1, 4, 8]} />
-              <meshStandardMaterial
-                color={isPassed ? "#10b981" : "#ef4444"}
-                emissive={isPassed ? "#10b981" : "#ef4444"}
-                emissiveIntensity={0.6}
+                emissiveIntensity={isPassed ? 1 : 0.5}
               />
             </mesh>
             {isPassed && (
               <pointLight
-                position={[0, 0, 0]}
-                intensity={3}
-                distance={8}
+                position={[0, 2, 0]}
+                intensity={5}
+                distance={10}
                 color="#10b981"
               />
             )}
@@ -96,16 +167,18 @@ function RacingTrack({ speed, distance, targetDistance }: { speed: number; dista
       })}
       
       {/* Progress indicator */}
-      <Html position={[0, 4, -5]} center>
+      <Html position={[0, 5, -5]} center>
         <div className="text-center">
-          <div className="text-4xl font-bold text-primary bg-background/90 px-6 py-3 rounded-lg border-2 border-primary backdrop-blur-sm mb-2">
+          <div className="text-4xl font-bold text-cyan-400 bg-slate-900/90 px-6 py-3 rounded-xl border-2 border-cyan-500/50 backdrop-blur-sm mb-2 shadow-lg shadow-cyan-500/20">
             {distance.toFixed(1)} / {targetDistance} m
           </div>
-          <div className="w-64 h-4 bg-muted rounded-full overflow-hidden border-2 border-border">
+          <div className="w-64 h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
             <div
-              className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-300"
+              className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-300 relative"
               style={{ width: `${progress}%` }}
-            />
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+            </div>
           </div>
         </div>
       </Html>
@@ -113,93 +186,112 @@ function RacingTrack({ speed, distance, targetDistance }: { speed: number; dista
   );
 }
 
-function HoverVehicle({ speed, lane }: { speed: number; lane: number }) {
-  const vehicleRef = useRef<any>();
+function HoverVehicle({ speed }: { speed: number }) {
+  const vehicleRef = useRef<THREE.Group>(null);
+  const engineRef = useRef<THREE.Mesh>(null);
   
   useFrame((state) => {
     if (vehicleRef.current) {
-      const targetX = lane * 2;
-      vehicleRef.current.position.x += (targetX - vehicleRef.current.position.x) * 0.1;
       vehicleRef.current.position.y = 0.5 + Math.sin(state.clock.elapsedTime * 5) * 0.1;
-      vehicleRef.current.rotation.z = (targetX - vehicleRef.current.position.x) * -0.3;
+      vehicleRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 3) * 0.02;
+    }
+    if (engineRef.current && speed > 0) {
+      engineRef.current.scale.x = 1 + Math.sin(state.clock.elapsedTime * 20) * 0.2;
     }
   });
 
   return (
-    <group ref={vehicleRef} position={[0, 0.5, 2]}>
-      {/* Main body */}
-      <mesh castShadow>
-        <boxGeometry args={[1.2, 0.6, 2]} />
-        <meshStandardMaterial
-          color="#00ffff"
-          emissive="#00ffff"
-          emissiveIntensity={0.5}
-          metalness={0.9}
-          roughness={0.1}
-        />
-      </mesh>
-      
-      {/* Cockpit */}
-      <mesh position={[0, 0.4, -0.3]} castShadow>
-        <boxGeometry args={[0.8, 0.4, 0.8]} />
-        <meshStandardMaterial
-          color="#0088ff"
-          transparent
-          opacity={0.6}
-          metalness={0.9}
-          roughness={0.1}
-        />
-      </mesh>
-      
-      {/* Engine glow */}
-      <mesh position={[0, 0, 1.2]}>
-        <cylinderGeometry args={[0.3, 0.4, 0.4, 16]} />
-        <meshStandardMaterial
-          color="#ff00ff"
-          emissive="#ff00ff"
-          emissiveIntensity={1}
-        />
-      </mesh>
-      
-      {/* Speed trail */}
-      {speed > 0 && (
-        <pointLight
-          position={[0, 0, 1.5]}
-          intensity={speed * 0.5}
-          distance={5}
-          color="#ff00ff"
-        />
-      )}
-      
-      {/* Wings */}
-      {[-0.8, 0.8].map((x, i) => (
-        <mesh key={i} position={[x, 0, 0]} castShadow>
-          <boxGeometry args={[0.2, 0.1, 1.5]} />
+    <Trail
+      width={speed > 0 ? 2 : 0}
+      length={6}
+      color={new THREE.Color("#ff00ff")}
+      attenuation={(t) => t * t}
+    >
+      <group ref={vehicleRef} position={[0, 0.5, 2]}>
+        {/* Main body */}
+        <mesh castShadow>
+          <boxGeometry args={[1.2, 0.5, 2.2]} />
           <meshStandardMaterial
-            color="#00ffff"
-            emissive="#00ffff"
-            emissiveIntensity={0.3}
+            color="#00d4ff"
+            emissive="#00d4ff"
+            emissiveIntensity={0.4}
+            metalness={0.95}
+            roughness={0.05}
+          />
+        </mesh>
+        
+        {/* Cockpit */}
+        <mesh position={[0, 0.35, -0.2]} castShadow>
+          <boxGeometry args={[0.7, 0.35, 0.7]} />
+          <meshStandardMaterial
+            color="#0088ff"
+            transparent
+            opacity={0.7}
             metalness={0.9}
             roughness={0.1}
           />
         </mesh>
-      ))}
-    </group>
+        
+        {/* Engine glow */}
+        <mesh ref={engineRef} position={[0, 0, 1.3]}>
+          <cylinderGeometry args={[0.25, 0.35, 0.5, 16]} />
+          <meshStandardMaterial
+            color="#ff00ff"
+            emissive="#ff00ff"
+            emissiveIntensity={speed > 0 ? 2 : 0.3}
+          />
+        </mesh>
+        
+        {/* Wings */}
+        {[-0.9, 0.9].map((x, i) => (
+          <mesh key={i} position={[x, 0, 0.3]} castShadow>
+            <boxGeometry args={[0.4, 0.08, 1.6]} />
+            <meshStandardMaterial
+              color="#00d4ff"
+              emissive="#00d4ff"
+              emissiveIntensity={0.3}
+              metalness={0.95}
+              roughness={0.05}
+            />
+          </mesh>
+        ))}
+        
+        {/* Speed effects */}
+        {speed > 0 && (
+          <>
+            <pointLight
+              position={[0, 0, 1.8]}
+              intensity={speed * 0.3}
+              distance={8}
+              color="#ff00ff"
+            />
+            <pointLight
+              position={[0, 0, -1]}
+              intensity={2}
+              distance={4}
+              color="#00ffff"
+            />
+          </>
+        )}
+      </group>
+    </Trail>
   );
 }
 
 function Scene({ speed, distance, isRacing, targetDistance }: RacingTrack3DProps) {
   return (
     <>
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[10, 10, 5]} intensity={0.5} />
-      <pointLight position={[0, 5, 5]} intensity={2} distance={20} color="#00ffff" />
+      <color attach="background" args={['#050510']} />
+      <fog attach="fog" args={['#050510', 15, 50]} />
       
-      {/* Atmospheric fog */}
-      <fog attach="fog" args={['#000033', 10, 50]} />
+      <ambientLight intensity={0.2} />
+      <directionalLight position={[10, 10, 5]} intensity={0.4} />
+      <pointLight position={[0, 8, 5]} intensity={3} distance={25} color="#00ffff" />
+      <pointLight position={[0, 8, -10]} intensity={2} distance={20} color="#ff00ff" />
       
+      <SpeedParticles speed={speed} isRacing={isRacing} />
       <RacingTrack speed={speed} distance={distance} targetDistance={targetDistance} />
-      <HoverVehicle speed={speed} lane={0} />
+      <HoverVehicle speed={speed} />
       
       <OrbitControls
         enablePan={false}
@@ -215,8 +307,8 @@ function Scene({ speed, distance, isRacing, targetDistance }: RacingTrack3DProps
 
 export function RacingTrack3D(props: RacingTrack3DProps) {
   return (
-    <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border bg-gradient-to-b from-gray-900 via-blue-900 to-purple-900">
-      <Canvas camera={{ position: [0, 4, 8], fov: 60 }}>
+    <div className="w-full h-[500px] rounded-2xl overflow-hidden border-2 border-cyan-500/30 bg-slate-950 shadow-2xl shadow-cyan-500/10">
+      <Canvas camera={{ position: [0, 4, 10], fov: 60 }} shadows>
         <Scene {...props} />
       </Canvas>
     </div>
