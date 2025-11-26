@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { CoordinateGrid3D } from '@/components/3d/CoordinateGrid3D';
 import { CoordinateGrid2D } from '@/components/2d/CoordinateGrid2D';
 import { toast } from 'sonner';
-import { ArrowLeft, Box, Grid3x3, Trophy, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Box, Grid3x3, Trophy, RotateCcw, Triangle, Square, Circle, Hexagon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Target {
   x: number;
@@ -12,20 +13,54 @@ interface Target {
   z?: number;
 }
 
+type GameMode = 'towers' | 'triangle' | 'rectangle' | 'freeform';
+
+const SHAPE_CONFIGS: Record<string, { targets: Target[]; description: string; pointsNeeded: number }> = {
+  triangle: {
+    targets: [
+      { x: 0, y: 3 },
+      { x: -3, y: -2 },
+      { x: 3, y: -2 }
+    ],
+    description: 'Plot 3 points to form a Triangle',
+    pointsNeeded: 3
+  },
+  rectangle: {
+    targets: [
+      { x: -3, y: 2 },
+      { x: 3, y: 2 },
+      { x: 3, y: -2 },
+      { x: -3, y: -2 }
+    ],
+    description: 'Plot 4 points to form a Rectangle',
+    pointsNeeded: 4
+  },
+  towers: {
+    targets: [
+      { x: 3, y: 4 },
+      { x: -2, y: 3 },
+      { x: 5, y: -2 }
+    ],
+    description: 'Place defense towers at exact coordinates',
+    pointsNeeded: 3
+  },
+  freeform: {
+    targets: [],
+    description: 'Click anywhere to create your own shape!',
+    pointsNeeded: 0
+  }
+};
+
 export default function CoordinatesGame() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<'2d' | '3d'>('2d');
+  const [gameMode, setGameMode] = useState<GameMode>('towers');
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(0);
   const [showCastle, setShowCastle] = useState(false);
+  const [showShapeComplete, setShowShapeComplete] = useState(false);
   const [points2D, setPoints2D] = useState<Array<{ x: number; y: number; color: string; label?: string }>>([]);
   const [points3D, setPoints3D] = useState<Array<{ x: number; y: number; z: number; color: string }>>([]);
-  
-  const [targets2D] = useState<Target[]>([
-    { x: 3, y: 4 },
-    { x: -2, y: 3 },
-    { x: 5, y: -2 }
-  ]);
   
   const [targets3D] = useState<Target[]>([
     { x: 2, y: 3, z: 1 },
@@ -36,29 +71,45 @@ export default function CoordinatesGame() {
   const [currentTargetIndex, setCurrentTargetIndex] = useState(0);
   const [correctPlacements, setCorrectPlacements] = useState(0);
 
+  const currentConfig = SHAPE_CONFIGS[gameMode];
+  const targets2D = currentConfig.targets;
   const currentTargets = mode === '2d' ? targets2D : targets3D;
-  const currentTarget = currentTargets[currentTargetIndex];
-  const placedCount = mode === '2d' ? points2D.length : points3D.length;
 
+  // Check for shape completion
   useEffect(() => {
-    if (correctPlacements === currentTargets.length && correctPlacements > 0) {
+    const correctPoints = points2D.filter(p => p.color === '#10b981');
+    
+    if (gameMode === 'freeform' && correctPoints.length >= 3) {
+      // In freeform mode, any 3+ points create a shape
+      setShowShapeComplete(true);
+      setTimeout(() => setShowShapeComplete(false), 2000);
+    } else if (correctPlacements === currentConfig.pointsNeeded && currentConfig.pointsNeeded > 0) {
       setShowCastle(true);
-      toast.success('All towers placed! Castle built! 🏰');
+      setShowShapeComplete(true);
+      const shapeBonus = gameMode === 'triangle' ? 200 : gameMode === 'rectangle' ? 300 : 150;
+      setScore(prev => prev + shapeBonus);
+      toast.success(`${gameMode === 'towers' ? 'Castle' : gameMode.charAt(0).toUpperCase() + gameMode.slice(1)} completed! +${shapeBonus} bonus! 🎉`);
+      
       setTimeout(() => {
         setShowCastle(false);
+        setShowShapeComplete(false);
         setLevel(level + 1);
         setCurrentTargetIndex(0);
         setCorrectPlacements(0);
-        if (mode === '2d') {
-          setPoints2D([]);
-        } else {
-          setPoints3D([]);
-        }
+        setPoints2D([]);
       }, 3000);
     }
-  }, [correctPlacements, currentTargets.length, level, mode]);
+  }, [correctPlacements, currentConfig.pointsNeeded, level, gameMode, points2D]);
 
   const handleGrid2DClick = (x: number, y: number) => {
+    if (gameMode === 'freeform') {
+      // Freeform mode - any click adds a point
+      setPoints2D([...points2D, { x, y, color: '#10b981', label: `(${x}, ${y})` }]);
+      setScore(prev => prev + 25);
+      toast.success('Point placed! +25 points');
+      return;
+    }
+
     if (currentTargetIndex >= targets2D.length) return;
 
     const target = targets2D[currentTargetIndex];
@@ -99,11 +150,8 @@ export default function CoordinatesGame() {
   };
 
   const handleClear = () => {
-    if (mode === '2d') {
-      setPoints2D([]);
-    } else {
-      setPoints3D([]);
-    }
+    setPoints2D([]);
+    setPoints3D([]);
     setCurrentTargetIndex(0);
     setCorrectPlacements(0);
     toast.info('Grid cleared');
@@ -118,11 +166,21 @@ export default function CoordinatesGame() {
     setShowCastle(false);
   };
 
+  const handleGameModeSwitch = (newGameMode: GameMode) => {
+    setGameMode(newGameMode);
+    setCurrentTargetIndex(0);
+    setCorrectPlacements(0);
+    setPoints2D([]);
+    setShowCastle(false);
+  };
+
+  const correctPoints = points2D.filter(p => p.color === '#10b981');
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
       <div className="container mx-auto py-6 max-w-7xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <Button
             variant="outline"
             onClick={() => navigate('/home')}
@@ -162,23 +220,88 @@ export default function CoordinatesGame() {
           </p>
         </div>
 
+        {/* Game Mode Selector (2D only) */}
+        {mode === '2d' && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-wrap justify-center gap-3 mb-6"
+          >
+            <Button
+              variant={gameMode === 'towers' ? 'default' : 'outline'}
+              onClick={() => handleGameModeSwitch('towers')}
+              className="gap-2"
+              size="sm"
+            >
+              🏰 Towers
+            </Button>
+            <Button
+              variant={gameMode === 'triangle' ? 'default' : 'outline'}
+              onClick={() => handleGameModeSwitch('triangle')}
+              className="gap-2"
+              size="sm"
+            >
+              <Triangle className="h-4 w-4" />
+              Triangle
+            </Button>
+            <Button
+              variant={gameMode === 'rectangle' ? 'default' : 'outline'}
+              onClick={() => handleGameModeSwitch('rectangle')}
+              className="gap-2"
+              size="sm"
+            >
+              <Square className="h-4 w-4" />
+              Rectangle
+            </Button>
+            <Button
+              variant={gameMode === 'freeform' ? 'default' : 'outline'}
+              onClick={() => handleGameModeSwitch('freeform')}
+              className="gap-2"
+              size="sm"
+            >
+              <Hexagon className="h-4 w-4" />
+              Freeform
+            </Button>
+          </motion.div>
+        )}
+
         {/* Stats Bar */}
         <div className="flex flex-wrap justify-center gap-4 mb-6">
-          <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/50 rounded-xl px-6 py-3 flex items-center gap-3">
+          <motion.div 
+            className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/50 rounded-xl px-6 py-3 flex items-center gap-3"
+            animate={{ scale: score > 0 ? [1, 1.05, 1] : 1 }}
+            transition={{ duration: 0.3 }}
+          >
             <Trophy className="h-5 w-5 text-amber-400" />
             <div>
               <p className="text-xs text-amber-300/70">Score</p>
               <p className="text-2xl font-bold text-amber-400">{score}</p>
             </div>
-          </div>
+          </motion.div>
           <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/50 rounded-xl px-6 py-3">
             <p className="text-xs text-cyan-300/70">Progress</p>
-            <p className="text-lg font-bold text-cyan-400">{correctPlacements}/{currentTargets.length} Towers</p>
+            <p className="text-lg font-bold text-cyan-400">
+              {gameMode === 'freeform' 
+                ? `${correctPoints.length} Points` 
+                : `${correctPlacements}/${currentConfig.pointsNeeded}`}
+            </p>
           </div>
           <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/50 rounded-xl px-6 py-3">
-            <p className="text-xs text-purple-300/70">Concept</p>
-            <p className="text-sm font-medium text-purple-400">{mode === '2d' ? '2D' : '3D'} Coordinate Plotting</p>
+            <p className="text-xs text-purple-300/70">Shape</p>
+            <p className="text-sm font-medium text-purple-400 capitalize">{gameMode}</p>
           </div>
+          {correctPoints.length >= 3 && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/50 rounded-xl px-6 py-3"
+            >
+              <p className="text-xs text-emerald-300/70">Shape Formed</p>
+              <p className="text-lg font-bold text-emerald-400">
+                {correctPoints.length === 3 ? '△ Triangle' : correctPoints.length === 4 ? '◇ Quad' : `⬡ ${correctPoints.length}-gon`}
+              </p>
+            </motion.div>
+          )}
         </div>
 
         {/* Mission Card */}
@@ -186,43 +309,84 @@ export default function CoordinatesGame() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <h2 className="text-xl md:text-2xl font-bold mb-2 text-white flex items-center gap-2">
-                <span className="text-2xl">🎯</span> Mission: Place Defense Towers
+                <span className="text-2xl">
+                  {gameMode === 'towers' ? '🎯' : gameMode === 'triangle' ? '📐' : gameMode === 'rectangle' ? '⬜' : '✨'}
+                </span>
+                Mission: {currentConfig.description}
               </h2>
               <p className="text-slate-400">
-                Click on the grid to place towers at the target coordinates
+                {gameMode === 'freeform' 
+                  ? 'Click points to create any shape - lines will connect automatically!'
+                  : 'Click on the grid to place points at the target coordinates'}
               </p>
             </div>
           </div>
 
           {/* Target Coordinates */}
-          <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/50">
-            <h3 className="text-sm font-semibold text-slate-300 mb-3">Target Coordinates:</h3>
-            <div className="flex flex-wrap gap-3">
-              {currentTargets.map((target, idx) => {
-                const isCompleted = idx < correctPlacements || (idx < currentTargetIndex && points2D.some(p => p.x === target.x && p.y === target.y && p.color === '#10b981'));
-                const isCurrent = idx === currentTargetIndex && correctPlacements < currentTargets.length;
-                
-                return (
-                  <div
-                    key={idx}
-                    className={`px-4 py-2 rounded-lg font-mono text-sm transition-all ${
-                      isCompleted
-                        ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 line-through'
-                        : isCurrent
-                        ? 'bg-cyan-500/20 border-2 border-cyan-400 text-cyan-300 animate-pulse shadow-lg shadow-cyan-500/20'
-                        : 'bg-slate-800/50 border border-slate-600 text-slate-400'
-                    }`}
-                  >
-                    {mode === '2d'
-                      ? `(${target.x}, ${target.y})`
-                      : `(${target.x}, ${target.y}, ${target.z})`}
-                    {isCompleted && ' ✓'}
-                  </div>
-                );
-              })}
+          {gameMode !== 'freeform' && targets2D.length > 0 && (
+            <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/50">
+              <h3 className="text-sm font-semibold text-slate-300 mb-3">Target Coordinates:</h3>
+              <div className="flex flex-wrap gap-3">
+                {targets2D.map((target, idx) => {
+                  const isCompleted = idx < correctPlacements;
+                  const isCurrent = idx === currentTargetIndex && correctPlacements < currentConfig.pointsNeeded;
+                  
+                  return (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className={`px-4 py-2 rounded-lg font-mono text-sm transition-all ${
+                        isCompleted
+                          ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 line-through'
+                          : isCurrent
+                          ? 'bg-cyan-500/20 border-2 border-cyan-400 text-cyan-300 animate-pulse shadow-lg shadow-cyan-500/20'
+                          : 'bg-slate-800/50 border border-slate-600 text-slate-400'
+                      }`}
+                    >
+                      ({target.x}, {target.y})
+                      {isCompleted && ' ✓'}
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Freeform hint */}
+          {gameMode === 'freeform' && (
+            <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-4 border border-purple-500/30">
+              <p className="text-purple-300 text-sm">
+                💡 <strong>Tip:</strong> Place 3+ points to automatically create a polygon! 
+                The shape will be filled and you'll see the geometry name.
+              </p>
+            </div>
+          )}
         </div>
+
+        {/* Shape Complete Celebration */}
+        <AnimatePresence>
+          {showShapeComplete && gameMode !== 'towers' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"
+            >
+              <motion.div
+                animate={{ 
+                  rotate: [0, 10, -10, 0],
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{ duration: 0.5 }}
+                className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-8 py-4 rounded-2xl shadow-2xl text-2xl font-bold"
+              >
+                🎉 {gameMode === 'freeform' ? 'Shape' : gameMode.charAt(0).toUpperCase() + gameMode.slice(1)} Complete! 🎉
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Grid */}
         {mode === '2d' ? (
@@ -231,7 +395,8 @@ export default function CoordinatesGame() {
             onGridClick={handleGrid2DClick}
             gridSize={10}
             cellSize={40}
-            showCastle={showCastle}
+            showCastle={showCastle && gameMode === 'towers'}
+            showConnectingLines={true}
           />
         ) : (
           <CoordinateGrid3D 
@@ -256,9 +421,10 @@ export default function CoordinatesGame() {
             {mode === '2d' ? (
               <>
                 <li className="flex items-center gap-2">✅ Hover over the grid to see coordinates</li>
-                <li className="flex items-center gap-2">📍 Click to place towers at target coordinates</li>
-                <li className="flex items-center gap-2">🏰 Place all 3 towers correctly to build a castle!</li>
-                <li className="flex items-center gap-2">⭐ Each correct placement earns you 100 points</li>
+                <li className="flex items-center gap-2">📍 Click to place points at coordinates</li>
+                <li className="flex items-center gap-2">📐 Lines automatically connect your points!</li>
+                <li className="flex items-center gap-2">🔷 Complete shapes to earn bonus points</li>
+                <li className="flex items-center gap-2">⭐ Try different modes: Towers, Triangle, Rectangle, or Freeform</li>
               </>
             ) : (
               <>
