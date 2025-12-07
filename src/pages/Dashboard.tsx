@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { MATH_GAMES } from '@/data/mathGames';
-import { LogOut, User, Sparkles, Trophy } from 'lucide-react';
+import { LogOut, User, Sparkles, Trophy, Award } from 'lucide-react';
 import { DecisionLabLogo } from '@/components/DecisionLabLogo';
 
 export default function Dashboard() {
@@ -26,6 +26,14 @@ export default function Dashboard() {
               >
                 <Trophy className="w-4 h-4" />
                 Leaderboard
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/achievements')}
+                className="gap-2"
+              >
+                <Award className="w-4 h-4" />
+                Achievements
               </Button>
               <Button
                 variant="ghost"
