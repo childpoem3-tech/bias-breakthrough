@@ -20,6 +20,7 @@ import PermutationsGame from "./pages/PermutationsGame";
 import CombinationsGame from "./pages/CombinationsGame";
 import ProbabilityGame from "./pages/ProbabilityGame";
 import RacingGame from "./pages/RacingGame";
+import Leaderboard from "./pages/Leaderboard";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/combinations" element={<CombinationsGame />} />
             <Route path="/probability" element={<ProbabilityGame />} />
             <Route path="/racing" element={<RacingGame />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
