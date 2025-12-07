@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MATH_GAMES } from '@/data/mathGames';
 import { LogOut, User, Sparkles, Trophy, Award } from 'lucide-react';
 import { DecisionLabLogo } from '@/components/DecisionLabLogo';
+import { DailyStreak, StreakBadge } from '@/components/DailyStreak';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -16,7 +17,10 @@ export default function Dashboard() {
       <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <DecisionLabLogo size="sm" />
+            <div className="flex items-center gap-4">
+              <DecisionLabLogo size="sm" />
+              <StreakBadge />
+            </div>
             
             <div className="flex items-center gap-4">
               <Button
@@ -57,6 +61,11 @@ export default function Dashboard() {
       </header>
 
       <main className="container mx-auto px-6 py-12">
+        {/* Daily Streak Card */}
+        <div className="max-w-2xl mx-auto mb-12">
+          <DailyStreak />
+        </div>
+
         <div className="text-center mb-12 animate-fade-in">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Sparkles className="w-8 h-8 text-primary animate-pulse" />
