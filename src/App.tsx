@@ -22,6 +22,7 @@ import ProbabilityGame from "./pages/ProbabilityGame";
 import RacingGame from "./pages/RacingGame";
 import Leaderboard from "./pages/Leaderboard";
 import Achievements from "./pages/Achievements";
+import RewardsShop from "./pages/RewardsShop";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/racing" element={<RacingGame />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/achievements" element={<Achievements />} />
+            <Route path="/shop" element={<RewardsShop />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

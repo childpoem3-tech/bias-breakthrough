@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { FactorsWorld3D } from '@/components/3d/FactorsWorld3D';
 import { toast } from 'sonner';
-import { ArrowLeft, Crown, Sparkles, Trophy } from 'lucide-react';
+import { ArrowLeft, Crown, Sparkles, Trophy, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useStreakMultiplier } from '@/hooks/useStreakMultiplier';
 
 export default function FactorsGame() {
   const navigate = useNavigate();
+  const { multiplier, applyMultiplier } = useStreakMultiplier();
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(0);
   const [targetNumber, setTargetNumber] = useState(12);
@@ -62,11 +64,12 @@ export default function FactorsGame() {
     ) {
       const newStreak = streak + 1;
       const bonusPoints = newStreak > 1 ? newStreak * 50 : 0;
-      const totalPoints = level * 100 + bonusPoints;
+      const basePoints = level * 100 + bonusPoints;
+      const totalPoints = applyMultiplier(basePoints);
       
       setShowVictory(true);
       setStreak(newStreak);
-      toast.success(`Perfect! All factors found! ${bonusPoints > 0 ? `🔥 +${bonusPoints} streak bonus!` : '🎉'}`);
+      toast.success(`Perfect! +${totalPoints} pts${multiplier > 1 ? ` (${multiplier}x streak bonus!)` : ''} 🎉`);
       setScore(score + totalPoints);
       
       setTimeout(() => {
@@ -166,6 +169,17 @@ export default function FactorsGame() {
               >
                 <span className="text-sm text-orange-300">🔥 Streak</span>
                 <p className="text-2xl font-bold text-orange-500">{streak}x</p>
+              </motion.div>
+            )}
+            {multiplier > 1 && (
+              <motion.div
+                className="bg-primary/20 px-6 py-3 rounded-lg border border-primary/50"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                whileHover={{ scale: 1.05 }}
+              >
+                <span className="text-sm text-primary/80"><Zap className="inline w-3 h-3" /> Daily Bonus</span>
+                <p className="text-2xl font-bold text-primary">{multiplier}x</p>
               </motion.div>
             )}
           </div>
