@@ -23,6 +23,7 @@ import RacingGame from "./pages/RacingGame";
 import Leaderboard from "./pages/Leaderboard";
 import Achievements from "./pages/Achievements";
 import RewardsShop from "./pages/RewardsShop";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/shop" element={<RewardsShop />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
