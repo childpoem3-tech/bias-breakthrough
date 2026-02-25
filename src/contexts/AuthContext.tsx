@@ -63,28 +63,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const ensureUserRecord = async (authUser: User) => {
-    const { data: existingUser } = await supabase
+    // Use limit(1) instead of .single() to avoid 406 errors when duplicates exist
+    const { data: existingUsers } = await supabase
       .from('users')
       .select('id')
       .eq('supabase_user_id', authUser.id)
-      .single();
+      .limit(1);
 
-    if (!existingUser) {
+    if (existingUsers && existingUsers.length > 0) {
+      setUserId(existingUsers[0].id);
+    } else {
       const { data: newUser } = await supabase
         .from('users')
-        .insert({
+        .upsert({
           supabase_user_id: authUser.id,
           email: authUser.email,
           consent_given: false
-        })
+        }, { onConflict: 'supabase_user_id' })
         .select()
         .single();
       
       if (newUser) {
         setUserId(newUser.id);
       }
-    } else {
-      setUserId(existingUser.id);
     }
   };
 
