@@ -26,12 +26,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    let isMounted = true;
+
+    const recoverSessionFromHash = async () => {
+      const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : '';
+      if (!hash.includes('access_token=')) return;
+
+      const hashParams = new URLSearchParams(hash);
+      const access_token = hashParams.get('access_token');
+      const refresh_token = hashParams.get('refresh_token');
+
+      if (!access_token || !refresh_token) return;
+
+      const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+
+      if (error) {
+        console.error('OAuth hash session recovery failed:', error);
+        toast({
+          title: 'Authentication Error',
+          description: 'Could not restore your Google session. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Clean sensitive tokens from the URL after session restoration
+      window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
+        if (!isMounted) return;
+
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           setTimeout(() => {
             ensureUserRecord(session.user);
@@ -40,52 +70,83 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        ensureUserRecord(session.user);
-      }
-      
-      // Also check for guest user in localStorage
-      const guestId = localStorage.getItem('guestUserId');
-      if (guestId && !session?.user) {
-        console.log('Found guest user in localStorage:', guestId);
-        setUserId(guestId);
-      }
-      
-      setIsLoading(false);
-    });
+    const initializeAuth = async () => {
+      try {
+        await recoverSessionFromHash();
 
-    return () => subscription.unsubscribe();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await ensureUserRecord(session.user);
+        }
+
+        // Also check for guest user in localStorage
+        const guestId = localStorage.getItem('guestUserId');
+        if (guestId && !session?.user) {
+          console.log('Found guest user in localStorage:', guestId);
+          setUserId(guestId);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const ensureUserRecord = async (authUser: User) => {
-    // Use limit(1) instead of .single() to avoid 406 errors when duplicates exist
-    const { data: existingUsers } = await supabase
-      .from('users')
-      .select('id')
-      .eq('supabase_user_id', authUser.id)
-      .limit(1);
+    try {
+      // Use limit(1) instead of .single() to avoid 406 errors when duplicates exist
+      const { data: existingUsers, error: lookupError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('supabase_user_id', authUser.id)
+        .limit(1);
 
-    if (existingUsers && existingUsers.length > 0) {
-      setUserId(existingUsers[0].id);
-    } else {
-      const { data: newUser } = await supabase
+      if (lookupError) {
+        throw lookupError;
+      }
+
+      if (existingUsers && existingUsers.length > 0) {
+        setUserId(existingUsers[0].id);
+        return;
+      }
+
+      const { data: newUser, error: upsertError } = await supabase
         .from('users')
         .upsert({
           supabase_user_id: authUser.id,
           email: authUser.email,
           consent_given: false
         }, { onConflict: 'supabase_user_id' })
-        .select()
+        .select('id')
         .single();
-      
+
+      if (upsertError) {
+        throw upsertError;
+      }
+
       if (newUser) {
         setUserId(newUser.id);
       }
+    } catch (error) {
+      console.error('Failed to ensure user record:', error);
+      toast({
+        title: 'Account Setup Error',
+        description: 'We could not complete your sign-in. Please try again.',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -93,7 +154,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-      redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${window.location.origin}/auth/callback`,
+        scopes: 'openid email profile'
       }
     });
     

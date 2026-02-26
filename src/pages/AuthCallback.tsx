@@ -1,54 +1,81 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DecisionLabLogo } from '@/components/DecisionLabLogo';
 
 /**
- * This page handles the OAuth callback from Google/Supabase.
- * After Google login, Supabase redirects here with a `code` param.
- * We exchange that code for a real session, then redirect to /dashboard.
+ * Handles OAuth callback from Supabase/Google.
+ * Supports both code-based redirects and hash-token redirects.
  */
 export default function AuthCallback() {
   const navigate = useNavigate();
+  const [status, setStatus] = useState('Finalizing your sign-in...');
 
   useEffect(() => {
+    let active = true;
+
+    const safeNavigate = (path: string) => {
+      if (!active) return;
+      navigate(path, { replace: true });
+    };
+
     const handleCallback = async () => {
-      // Supabase automatically reads the code from the URL and sets the session
-      const { data, error } = await supabase.auth.getSession();
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 
-      if (error) {
-        console.error('Auth callback error:', error);
-        navigate('/auth?error=callback_failed');
-        return;
-      }
+        const hasCode = searchParams.has('code');
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
 
-      if (data.session) {
-        // Successfully authenticated — go to dashboard
-        navigate('/dashboard', { replace: true });
-      } else {
-        // No session yet — Supabase might still be exchanging the code
-        // Listen for the auth state change
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          (event, session) => {
-            if (event === 'SIGNED_IN' && session) {
-              subscription.unsubscribe();
-              navigate('/dashboard', { replace: true });
-            } else if (event === 'SIGNED_OUT') {
-              subscription.unsubscribe();
-              navigate('/auth');
-            }
+        if (hasCode) {
+          setStatus('Exchanging secure login code...');
+          const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+          if (error) throw error;
+        } else if (accessToken && refreshToken) {
+          setStatus('Restoring your session...');
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) throw error;
+
+          // Remove token hash from URL after successful session set
+          window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
+        }
+
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        if (data.session) {
+          safeNavigate('/dashboard');
+          return;
+        }
+
+        setStatus('Waiting for authentication confirmation...');
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN' && session) {
+            subscription.unsubscribe();
+            safeNavigate('/dashboard');
           }
-        );
+        });
 
-        // Timeout fallback after 5 seconds
         setTimeout(() => {
           subscription.unsubscribe();
-          navigate('/auth?error=timeout');
-        }, 5000);
+          safeNavigate('/auth?error=timeout');
+        }, 8000);
+      } catch (error) {
+        console.error('Auth callback error:', error);
+        safeNavigate('/auth?error=callback_failed');
       }
     };
 
     handleCallback();
+
+    return () => {
+      active = false;
+    };
   }, [navigate]);
 
   return (
@@ -58,7 +85,7 @@ export default function AuthCallback() {
       </div>
       <div className="flex flex-col items-center gap-3">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-muted-foreground text-sm font-medium">Signing you in...</p>
+        <p className="text-muted-foreground text-sm font-medium">{status}</p>
       </div>
     </div>
   );
