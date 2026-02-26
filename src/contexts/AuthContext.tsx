@@ -107,38 +107,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const ensureUserRecord = async (authUser: User) => {
     try {
-      // Use limit(1) instead of .single() to avoid 406 errors when duplicates exist
-      const { data: existingUsers, error: lookupError } = await supabase
+      const { data: ensuredUser, error } = await supabase
         .from('users')
-        .select('id')
-        .eq('supabase_user_id', authUser.id)
-        .limit(1);
-
-      if (lookupError) {
-        throw lookupError;
-      }
-
-      if (existingUsers && existingUsers.length > 0) {
-        setUserId(existingUsers[0].id);
-        return;
-      }
-
-      const { data: newUser, error: upsertError } = await supabase
-        .from('users')
-        .upsert({
-          supabase_user_id: authUser.id,
-          email: authUser.email,
-          consent_given: false
-        }, { onConflict: 'supabase_user_id' })
+        .upsert(
+          {
+            supabase_user_id: authUser.id,
+            email: authUser.email,
+            consent_given: false,
+          },
+          { onConflict: 'supabase_user_id' }
+        )
         .select('id')
         .single();
 
-      if (upsertError) {
-        throw upsertError;
+      if (error) {
+        throw error;
       }
 
-      if (newUser) {
-        setUserId(newUser.id);
+      if (ensuredUser) {
+        setUserId(ensuredUser.id);
       }
     } catch (error) {
       console.error('Failed to ensure user record:', error);
@@ -151,14 +138,73 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    const isEmbeddedPreview = window.self !== window.top;
+
+    // In embedded previews, popup flow is more reliable than full redirect.
+    if (isEmbeddedPreview) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          scopes: 'openid email profile',
+          skipBrowserRedirect: true,
+        }
+      });
+
+      if (error) {
+        toast({
+          title: 'Authentication Error',
+          description: error.message,
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      if (!data?.url) {
+        toast({
+          title: 'Authentication Error',
+          description: 'Could not start Google sign-in. Please try again.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const popup = window.open(data.url, 'google-oauth', 'width=520,height=720');
+      if (!popup) {
+        toast({
+          title: 'Popup Blocked',
+          description: 'Please allow popups to continue with Google sign-in.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const startedAt = Date.now();
+      const poll = window.setInterval(async () => {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session) {
+          window.clearInterval(poll);
+          popup.close();
+          return;
+        }
+
+        if (popup.closed || Date.now() - startedAt > 60_000) {
+          window.clearInterval(poll);
+        }
+      }, 600);
+
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo,
         scopes: 'openid email profile'
       }
     });
-    
+
     if (error) {
       toast({
         title: 'Authentication Error',

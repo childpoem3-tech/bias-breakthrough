@@ -1,16 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { DecisionLabLogo } from '@/components/DecisionLabLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import { Brain, UserCircle, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-type AuthMode = 'options' | 'signin' | 'signup';
+type AuthMode = 'options' | 'signin' | 'signup' | 'otp-request' | 'otp-verify';
 
 export default function Auth() {
   const { signInWithGoogle, signInAsGuest, user, isLoading } = useAuth();
@@ -21,6 +21,7 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [otpCode, setOtpCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -64,6 +65,74 @@ export default function Auth() {
     }
   };
 
+  useEffect(() => {
+    const errorParam = new URLSearchParams(window.location.search).get('error');
+    if (!errorParam) return;
+
+    const messageByError: Record<string, string> = {
+      timeout: 'Google sign-in timed out. Please try again.',
+      callback_failed: 'Google callback failed. Please retry sign-in.',
+      access_denied: 'Google sign-in was cancelled or denied.',
+    };
+
+    toast({
+      title: 'Sign-in issue',
+      description: messageByError[errorParam] ?? 'Authentication failed. Please try again.',
+      variant: 'destructive',
+    });
+
+    navigate('/auth', { replace: true });
+  }, [navigate, toast]);
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    setSubmitting(false);
+
+    if (error) {
+      toast({ title: 'OTP Send Failed', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    setOtpCode('');
+    setMode('otp-verify');
+    toast({ title: 'OTP sent', description: 'Check your email for the 6-digit code.' });
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (otpCode.length !== 6) {
+      toast({ title: 'Invalid code', description: 'Please enter the 6-digit code.', variant: 'destructive' });
+      return;
+    }
+
+    setSubmitting(true);
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: otpCode,
+      type: 'email',
+    });
+    setSubmitting(false);
+
+    if (error) {
+      toast({ title: 'OTP Verification Failed', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    toast({ title: 'Signed in', description: 'Welcome back!' });
+    navigate('/dashboard');
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background flex items-center justify-center">
@@ -83,10 +152,26 @@ export default function Auth() {
             <DecisionLabLogo size="lg" />
           </div>
           <h1 className="text-3xl font-bold mb-2">
-            {mode === 'signup' ? 'Create Account' : mode === 'signin' ? 'Welcome Back' : 'Welcome to Decision Lab'}
+            {mode === 'signup'
+              ? 'Create Account'
+              : mode === 'signin'
+                ? 'Welcome Back'
+                : mode === 'otp-request'
+                  ? 'Email OTP Sign In'
+                  : mode === 'otp-verify'
+                    ? 'Verify Your Code'
+                    : 'Welcome to Decision Lab'}
           </h1>
           <p className="text-muted-foreground">
-            {mode === 'signup' ? 'Sign up to track your progress' : mode === 'signin' ? 'Sign in to continue learning' : "Choose how you'd like to continue"}
+            {mode === 'signup'
+              ? 'Sign up to track your progress'
+              : mode === 'signin'
+                ? 'Sign in to continue learning'
+                : mode === 'otp-request'
+                  ? 'Enter your email to get a one-time code'
+                  : mode === 'otp-verify'
+                    ? `Enter the code sent to ${email}`
+                    : "Choose how you'd like to continue"}
           </p>
         </div>
 
@@ -128,7 +213,18 @@ export default function Auth() {
                 onClick={() => setMode('signin')}
               >
                 <Mail className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
-                Sign in with Email
+                Sign in with Email + Password
+              </Button>
+
+              {/* Email OTP Sign In */}
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full h-14 text-base font-semibold group hover:border-primary transition-all duration-300"
+                onClick={() => setMode('otp-request')}
+              >
+                <Mail className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
+                Sign in with Email OTP
               </Button>
 
               {/* Email Sign Up */}
@@ -210,6 +306,66 @@ export default function Auth() {
             </form>
           )}
 
+          {/* Email OTP Request Form */}
+          {mode === 'otp-request' && (
+            <form onSubmit={handleSendOtp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email-otp">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="email-otp"
+                    type="email"
+                    placeholder="you@example.com"
+                    className="pl-10"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" size="lg" className="w-full h-12 text-base font-semibold" disabled={submitting}>
+                {submitting ? 'Sending code…' : 'Send OTP Code'}
+              </Button>
+
+              <p className="text-sm text-center text-muted-foreground">
+                Prefer password?{' '}
+                <button type="button" className="text-primary hover:underline font-medium" onClick={() => setMode('signin')}>Sign in with password</button>
+              </p>
+            </form>
+          )}
+
+          {/* Email OTP Verify Form */}
+          {mode === 'otp-verify' && (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp-code">6-digit code</Label>
+                <div className="flex justify-center py-2">
+                  <InputOTP id="otp-code" maxLength={6} value={otpCode} onChange={setOtpCode}>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+              </div>
+
+              <Button type="submit" size="lg" className="w-full h-12 text-base font-semibold" disabled={submitting}>
+                {submitting ? 'Verifying…' : 'Verify & Sign In'}
+              </Button>
+
+              <p className="text-sm text-center text-muted-foreground">
+                Didn't receive a code?{' '}
+                <button type="button" className="text-primary hover:underline font-medium" onClick={() => setMode('otp-request')}>Resend OTP</button>
+              </p>
+            </form>
+          )}
+
           {/* Email Sign Up Form */}
           {mode === 'signup' && (
             <form onSubmit={handleEmailSignUp} className="space-y-4">
@@ -276,7 +432,7 @@ export default function Auth() {
             <button
               type="button"
               className="mt-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mx-auto"
-              onClick={() => { setMode('options'); setEmail(''); setPassword(''); setConfirmPassword(''); }}
+              onClick={() => { setMode('options'); setEmail(''); setPassword(''); setConfirmPassword(''); setOtpCode(''); }}
             >
               <ArrowLeft className="w-4 h-4" /> All sign-in options
             </button>
