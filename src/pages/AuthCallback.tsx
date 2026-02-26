@@ -24,6 +24,12 @@ export default function AuthCallback() {
         const searchParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 
+        const callbackError = searchParams.get('error') || hashParams.get('error');
+        if (callbackError) {
+          safeNavigate(`/auth?error=${encodeURIComponent(callbackError)}`);
+          return;
+        }
+
         const hasCode = searchParams.has('code');
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
@@ -31,17 +37,23 @@ export default function AuthCallback() {
         if (hasCode) {
           setStatus('Exchanging secure login code...');
           const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
-          if (error) throw error;
-        } else if (accessToken && refreshToken) {
+          if (error) {
+            console.warn('Code exchange failed, trying fallback session recovery:', error.message);
+          }
+        }
+
+        if (accessToken && refreshToken) {
           setStatus('Restoring your session...');
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
-          if (error) throw error;
-
-          // Remove token hash from URL after successful session set
-          window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
+          if (error) {
+            console.warn('Hash session recovery failed:', error.message);
+          } else {
+            // Remove token hash from URL after successful session set
+            window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
+          }
         }
 
         const { data, error } = await supabase.auth.getSession();
@@ -64,7 +76,7 @@ export default function AuthCallback() {
         setTimeout(() => {
           subscription.unsubscribe();
           safeNavigate('/auth?error=timeout');
-        }, 8000);
+        }, 12000);
       } catch (error) {
         console.error('Auth callback error:', error);
         safeNavigate('/auth?error=callback_failed');
